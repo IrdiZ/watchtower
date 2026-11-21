@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watchtower · Several sources</title>
+<link rel="stylesheet" href="/_ui/static/ui.css">
+<script src="/_ui/static/nav.js" defer></script>
+<style>
+  :root {
+    color-scheme: light dark;
+    --c-font: var(--wt-font, system-ui, -apple-system, "Segoe UI", sans-serif);
+    --c-radius: var(--wt-radius, 8px);
+    --c-tint: color-mix(in srgb, var(--wt-accent) 10%, var(--wt-surface));
+    --c-hover: color-mix(in srgb, var(--wt-text) 4%, var(--wt-surface));
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--wt-bg); color: var(--wt-text); font: 15px/1.45 var(--c-font); }
+  h1, h2, p { margin: 0; }
+  a { color: var(--wt-accent); }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--wt-accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  .frame { width: min(100% - 48px, 1440px); margin-inline: auto; padding-block: 24px 56px; }
+
+  .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; }
+  h1 { font-size: 24px; font-weight: 650; letter-spacing: -.01em; }
+  .lede { color: var(--wt-muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .lede b { color: var(--wt-text); font-weight: 650; }
+  .btn { height: 38px; padding: 0 14px; border: 1px solid var(--wt-border); border-radius: var(--c-radius);
+    background: var(--wt-surface); cursor: pointer; white-space: nowrap; }
+  .btn:hover:not(:disabled) { border-color: var(--wt-muted); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.small { height: 32px; padding: 0 12px; }
+
+  .tabs { display: inline-flex; margin-top: 18px; border: 1px solid var(--wt-border); border-radius: var(--c-radius);
+    overflow: hidden; background: var(--wt-surface); }
+  .tabs button { height: 38px; padding: 0 14px; border: 0; background: none; cursor: pointer; color: var(--wt-muted); white-space: nowrap; }
+  .tabs button + button { border-left: 1px solid var(--wt-border); }
+  .tabs button[aria-pressed="true"] { color: var(--wt-accent); background: var(--c-tint); font-weight: 600; }
+  .tabs .n { font-variant-numeric: tabular-nums; font-weight: 500; opacity: .8; margin-left: 4px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; cursor: pointer;
+    border: 1px solid var(--wt-border); border-radius: 999px; background: var(--wt-surface); font-size: 14px; white-space: nowrap; }
+  .chip:hover { border-color: var(--wt-muted); }
+  .chip .n { color: var(--wt-muted); font-variant-numeric: tabular-nums; font-size: 13px; }
+  .chip[aria-pressed="true"] { border-color: var(--wt-accent); background: var(--c-tint); color: var(--wt-accent); font-weight: 600; }
+  .chip[aria-pressed="true"] .n { color: inherit; font-weight: 500; }
+  .chip.zero:not([aria-pressed="true"]) { opacity: .5; }
+
+  .bar { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(200px, 360px) auto; gap: 12px; margin-top: 12px; }
+  .field { height: 38px; padding: 0 12px; border: 1px solid var(--wt-border); border-radius: var(--c-radius);
+    background: var(--wt-surface); width: 100%; min-width: 0; }
+  input.field::placeholder { color: var(--wt-muted); }
+  select.field { cursor: pointer; padding-right: 8px; }
+
+  .cluster { margin-top: 16px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--wt-warn) 45%, var(--wt-border));
+    border-radius: calc(var(--c-radius) + 2px); background: color-mix(in srgb, var(--wt-warn) 7%, var(--wt-surface));
+    display: grid; grid-template-columns: 1fr auto; gap: 6px 20px; align-items: center; }
+  .cluster h2 { font-size: 16px; font-weight: 650; }
+  .cluster p { color: var(--wt-muted); font-size: 14px; max-width: 110ch; }
+  .cluster .eg { grid-column: 1 / -1; font-size: 13.5px; color: var(--wt-muted); font-variant-numeric: tabular-nums; }
+  .cluster .eg b { color: var(--wt-text); font-weight: 600; }
+
+  .panel { margin-top: 16px; border: 1px solid var(--wt-border); border-radius: calc(var(--c-radius) + 2px);
+    background: var(--wt-surface); overflow: hidden; }
+  .row { display: grid; grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr) 170px; gap: 6px 20px; padding: 12px 16px;
+    border-top: 1px solid var(--wt-border); align-items: start; }
+  .row:first-child { border-top: 0; }
+  .row:hover { background: var(--c-hover); }
+  .row.headrow { background: var(--wt-bg); color: var(--wt-muted); font-size: 12.5px; font-weight: 600; padding-block: 9px; }
+  .row.headrow:hover { background: var(--wt-bg); }
+  .what { grid-column: 2 / 4; font-weight: 600; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical; overflow: hidden; }
+  .fieldname { font-weight: 650; grid-row: span 2; }
+  .fieldname small { display: block; font-weight: 400; color: var(--wt-muted); font-size: 12.5px; margin-top: 2px; }
+  .side { min-width: 0; }
+  .side .host { font-size: 13px; }
+  .side .host a { text-decoration: none; }
+  .side .host a:hover { text-decoration: underline; }
+  .side .host .id { color: var(--wt-muted); }
+  .side .v { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; margin-top: 1px; }
+  .side .v.long { font-size: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .diffcell { grid-row: span 2; justify-self: end; text-align: right; }
+  .diff { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; white-space: nowrap;
+    color: var(--wt-muted); background: color-mix(in srgb, var(--wt-muted) 14%, transparent); }
+  .diff.warn { color: var(--wt-warn); background: color-mix(in srgb, var(--wt-warn) 14%, transparent); }
+  .diff.bad { color: var(--wt-bad); background: color-mix(in srgb, var(--wt-bad) 13%, transparent); }
+  .conf { display: block; color: var(--wt-muted); font-size: 12.5px; margin-top: 5px; font-variant-numeric: tabular-nums; }
+  .recs { grid-column: 2 / 4; list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 14px; }
+  .recs .id, .muted { color: var(--wt-muted); }
+  .empty { padding: 40px 16px; text-align: center; color: var(--wt-muted); }
+  .empty b { display: block; color: var(--wt-text); font-size: 16px; margin-bottom: 4px; }
+
+  .pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+    padding: 10px 16px; border-top: 1px solid var(--wt-border); background: var(--wt-bg); color: var(--wt-muted);
+    font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .pager .nav { display: flex; align-items: center; gap: 8px; }
+  #error { margin-top: 14px; color: var(--wt-bad); }
+
+  @media (max-width: 900px) {
+    .frame { width: calc(100% - 32px); padding-top: 16px; }
+    .bar { grid-template-columns: 1fr 1fr; }
+    .bar input.field { grid-column: 1 / -1; }
+    .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+    .cluster { grid-template-columns: 1fr; }
+    .tabs { display: flex; } .tabs button { flex: 1; padding: 0 8px; font-size: 14px; }
+    .row { grid-template-columns: 1fr; gap: 8px; }
+    .row.headrow { display: none; }
+    .what, .recs { grid-column: auto; }
+    .fieldname, .diffcell { grid-row: auto; }
+    .fieldname small { display: inline; margin-left: 6px; }
+    .diffcell { justify-self: start; text-align: left; }
+    .conf { display: inline; margin-left: 8px; }
+  }
+</style>
+</head>
+<body>
+<main class="frame">
+  <div class="head">
+    <div>
+      <h1>Several sources</h1>
+      <p class="lede" id="lede">Comparing portals…</p>
+    </div>
+    <button class="btn" id="refresh" type="button" title="Run the comparison again on the tenders served now">Recompute</button>
+  </div>
+  <p id="error" role="alert" hidden></p>
+
+  <div id="ui" hidden>
+    <div class="tabs" role="group" aria-label="View">
+      <button type="button" data-view="conflicts">Disagreements<span class="n" id="n-conflicts"></span></button>
+      <button type="button" data-view="groups">Matched tenders<span class="n" id="n-groups"></span></button>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Kind of disagreement"></div>
+    <div class="bar">
+      <input class="field" id="q" type="search" placeholder="Search title, buyer, reference or tender id" aria-label="Search" autocomplete="off">
+      <select class="field" id="src" aria-label="Portal or portal pair"></select>
+      <select class="field" id="sort" aria-label="Sort">
+        <option value="big">Largest difference first</option>
+        <option value="small">Smallest difference first</option>
+      </select>
+    </div>
+
+    <section class="cluster" id="cluster" hidden>
+      <div>
+        <h2 id="cluster-title"></h2>
+        <p>BOAMP's open-data API labels Paris local time as UTC; the buyer's platform has the right time. The clock time is the same on both sides, so these are one cause, not separate disagreements.</p>
+      </div>
+      <button class="btn" id="cluster-toggle" type="button" aria-expanded="false"></button>
+      <div class="eg" id="cluster-eg"></div>
+    </section>
+
+    <div class="panel">
+      <div id="rows"></div>
+      <div class="pager">
+        <span id="range">&nbsp;</span>
+        <div class="nav">
+          <button class="btn small" id="prev" type="button">Previous</button>
+          <span id="pageno"></span>
+          <button class="btn small" id="next" type="button">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+const nf = new Intl.NumberFormat("en");
+const PAGE = 25;
+const fieldNames = {deadline: "Deadline", status: "Status", buyer: "Buyer", documents: "Documents", title: "Title"};
+const $ = id => document.getElementById(id);
+let data = null, conflicts = [], groups = [], groupsById = new Map();
+
+function el(tag, attrs, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") node.className = v; else node.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c === null || c === undefined || c === false) continue;
+    node.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return node;
+}
+const safeUrl = u => typeof u === "string" && /^https?:\/\//i.test(u) ? u : null;
+
+// ---- state in the query string -------------------------------------------------------------------------------------
+const FILTERS = ["all", "deadline", "hour", "day", "title", "buyer", "same", "other"];
+function readState() {
+  const p = new URLSearchParams(location.search);
+  const page = parseInt(p.get("page"), 10);
+  return {
+    view: p.get("view") === "groups" ? "groups" : "conflicts",
+    f: FILTERS.includes(p.get("f")) ? p.get("f") : "all",
+    src: p.get("src") || "", q: p.get("q") || "", sort: p.get("sort") === "small" ? "small" : "big",
+    page: page > 0 ? page : 1, open: p.get("open") === "1",
+  };
+}
+let state = readState();
+function writeState(push) {
+  const p = new URLSearchParams();
+  if (state.view !== "conflicts") p.set("view", state.view);
+  if (state.f !== "all") p.set("f", state.f);
+  if (state.src) p.set("src", state.src);
+  if (state.q) p.set("q", state.q);
+  if (state.sort !== "big") p.set("sort", state.sort);
+  if (state.page !== 1) p.set("page", state.page);
+  if (state.open) p.set("open", "1");
+  const qs = p.toString();
+  history[push ? "pushState" : "replaceState"](null, "", location.pathname + (qs ? "?" + qs : ""));
+}
+function update(patch, opts) {
+  state = {...state, ...patch};
+  if (!("page" in patch)) state.page = 1;
+  writeState(!(opts && opts.replace));
+  render();
+}
+
+// ---- derive what the filters need, once per load -------------------------------------------------------------------
+function prepare() {
+  groupsById = new Map(data.groups.map(g => [g.id, g]));
+  const hay = recs => recs.map(r => [r.title, r.buyerName, r.host, r.tenderId, r.referenceNumber, r.display].join(" ")).join(" ").toLowerCase();
+  groups = data.groups.map(g => {
+    const hosts = [...new Set(g.records.map(r => r.host))].sort();
+    return {g, hosts, pair: hosts.join("|"), hay: hay(g.records)};
+  });
+  conflicts = data.conflicts.map(c => {
+    const g = groupsById.get(c.groupId);
+    const hosts = [...new Set(c.values.map(v => v.host))].sort();
+    const item = {c, g, hosts, pair: hosts.join("|"), hay: hay(c.values) + " " + (g ? hay(g.records) : ""), seconds: null, size: 0, boamp: false};
+    if (c.field === "deadline") {
+      const ts = c.values.map(v => Date.parse(v.value)).filter(Number.isFinite);
+      if (ts.length > 1) item.seconds = (Math.max(...ts) - Math.min(...ts)) / 1000;
+      item.size = item.seconds || 0;
+      // One cause: BOAMP gives the Paris clock time with a UTC label, so it lands exactly one hour from the other source.
+      item.boamp = item.seconds === 3600 && c.values.some(v => v.host === "boamp.fr" && /(Z|\+00:00)$/.test(v.value || ""));
+    } else {
+      const m = /(\d+)% similar/.exec(c.note || "");
+      item.size = m ? 100 - +m[1] : 1;  // title and buyer: how unlike the two texts are
+    }
+    return item;
+  });
+}
+const kinds = {
+  all: () => true,
+  deadline: x => x.c.field === "deadline",
+  hour: x => x.seconds === 3600,
+  day: x => x.seconds !== null && x.seconds >= 86400,
+  title: x => x.c.field === "title",
+  buyer: x => x.c.field === "buyer",
+  same: x => x.c.kind === "within-portal",
+  other: x => !["deadline", "title", "buyer"].includes(x.c.field),
+};
+const chipLabels = [["all", "All"], ["deadline", "Deadline"], ["hour", "Exactly 1 h apart"], ["day", "A day or more apart"],
+  ["title", "Title"], ["buyer", "Buyer"], ["same", "Same-portal duplicates"], ["other", "Status and documents"]];
+const fieldOrder = {deadline: 0, status: 1, documents: 2, buyer: 3, title: 4};
+
+function inScope(x) {
+  if (state.src && !(state.src.includes("|") ? x.pair === state.src : x.hosts.includes(state.src))) return false;
+  if (state.q) { const h = x.hay; for (const w of state.q.toLowerCase().split(/\s+/)) if (w && !h.includes(w)) return false; }
+  return true;
+}
+
+// ---- render --------------------------------------------------------------------------------------------------------
+function sourceLine(v) {
+  const url = safeUrl(v.url);
+  return el("div", {class: "host"}, url ? el("a", {href: url, target: "_blank", rel: "noopener noreferrer"}, v.host) : v.host,
+    " ", el("span", {class: "id"}, v.tenderId));
+}
+function diffClass(x) {
+  if (x.c.field === "deadline") return x.seconds >= 86400 ? "bad" : "warn";
+  if (x.c.field === "status") return "bad";
+  return "";
+}
+function conflictRow(x) {
+  const c = x.c, long = c.field === "title" || c.field === "buyer";
+  const title = x.g && x.g.records[0] ? x.g.records[0].title : "";
+  const sides = c.values.slice(0, 2).map(v => el("div", {class: "side"}, sourceLine(v),
+    el("div", {class: "v" + (long ? " long" : ""), title: long ? v.display : null}, v.display ?? "not given")));
+  const extra = c.values.slice(2).map(v => el("div", {class: "side", style: "grid-column:2/4"}, sourceLine(v),
+    el("div", {class: "v"}, v.display ?? "not given")));
+  return el("div", {class: "row"},
+    el("div", {class: "fieldname"}, fieldNames[c.field] || c.field, c.kind === "within-portal" ? el("small", {}, "one portal, two records") : null),
+    c.field === "title" ? null : el("div", {class: "what", title}, title || "(no title)"),
+    c.field === "title" ? el("div", {class: "what muted", style: "font-weight:400;font-size:13px"}, x.g && x.g.records[0] && x.g.records[0].buyerName || "") : null,
+    el("div", {class: "diffcell"}, el("span", {class: "diff " + diffClass(x)}, c.note),
+      el("span", {class: "conf"}, `match ${Math.round(c.confidence * 100)}%`)),
+    ...sides, ...extra);
+}
+function evidenceText(g) {
+  const seen = new Set();
+  for (const e of g.evidence || []) for (const t of e.evidence || []) seen.add(t.text);
+  return [...seen].slice(0, 3).join(" · ");
+}
+function groupRow(x) {
+  const g = x.g, first = g.records[0] || {};
+  return el("div", {class: "row"},
+    el("div", {class: "fieldname"}, g.kind === "cross-portal" ? `${x.hosts.length} portals` : "One portal",
+      el("small", {}, `${g.records.length} records`)),
+    el("div", {class: "what", title: first.title}, first.title || "(no title)"),
+    el("div", {class: "diffcell"}, el("span", {class: "diff"}, `matched by ${g.strongestEvidence}`),
+      el("span", {class: "conf"}, `match ${Math.round(g.confidence * 100)}%`)),
+    el("ul", {class: "recs"}, g.records.map(r => {
+      const url = safeUrl(r.url);
+      return el("li", {}, url ? el("a", {href: url, target: "_blank", rel: "noopener noreferrer"}, r.host) : r.host, " ",
+        el("span", {class: "id"}, [r.tenderId, r.deadlineDisplay, r.status].filter(Boolean).join(" · ")));
+    }), evidenceText(g) ? el("li", {class: "muted"}, evidenceText(g)) : null));
+}
+
+function render() {
+  const s = data.summary;
+  $("lede").replaceChildren(el("b", {}, nf.format(s.crossPortalGroups)), " tenders are on more than one of ",
+    el("b", {}, nf.format(s.crossPortalPortals)), " portals. ", el("b", {}, nf.format(s.conflicts)),
+    s.conflicts === 1 ? " field disagrees" : " fields disagree", ` between sources. Compared ${nf.format(s.records)} tenders at `,
+    new Date(data.computedAt).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}), ".");
+  $("n-conflicts").textContent = nf.format(conflicts.length);
+  $("n-groups").textContent = nf.format(groups.length) + (data.truncated ? ` of ${nf.format(s.groups)}` : "");
+  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === state.view ? "true" : "false"));
+  if (document.activeElement !== $("q")) $("q").value = state.q;
+  $("sort").value = state.sort;
+  const isConflicts = state.view === "conflicts";
+  $("chips").hidden = !isConflicts; $("sort").hidden = !isConflicts;
+
+  // Portal / pair picker, counted over the current view.
+  const pool = isConflicts ? conflicts : groups;
+  const byHost = new Map(), byPair = new Map();
+  for (const x of pool) {
+    for (const h of x.hosts) byHost.set(h, (byHost.get(h) || 0) + 1);
+    if (x.hosts.length > 1) byPair.set(x.pair, (byPair.get(x.pair) || 0) + 1);
+  }
+  const desc = m => [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const opt = (value, label) => el("option", {value, selected: value === state.src ? "" : null}, label);
+  $("src").replaceChildren(opt("", "All portals"),
+    el("optgroup", {label: "Portal"}, desc(byHost).map(([h, n]) => opt(h, `${h} (${nf.format(n)})`))),
+    el("optgroup", {label: "Portal pair"}, desc(byPair).map(([p, n]) => opt(p, `${p.replace(/\|/g, " and ")} (${nf.format(n)})`))));
+  $("src").value = state.src;
+
+  let list;
+  $("cluster").hidden = true;
+  if (isConflicts) {
+    const scoped = conflicts.filter(inScope);
+    $("chips").replaceChildren(...chipLabels.map(([key, label]) => {
+      const n = scoped.filter(kinds[key]).length;
+      const b = el("button", {type: "button", class: "chip" + (n ? "" : " zero"), "aria-pressed": state.f === key ? "true" : "false"},
+        el("span", {}, label), el("span", {class: "n"}, nf.format(n)));
+      b.addEventListener("click", () => update({f: state.f === key && key !== "all" ? "all" : key}));
+      return b;
+    }));
+    list = scoped.filter(kinds[state.f]);
+    const dir = state.sort === "small" ? 1 : -1;
+    list.sort((a, b) => (fieldOrder[a.c.field] ?? 9) - (fieldOrder[b.c.field] ?? 9) || dir * (a.size - b.size) || b.c.confidence - a.c.confidence);
+
+    // The BOAMP one-hour group: one explained cluster instead of hundreds of identical rows.
+    const cluster = list.filter(x => x.boamp);
+    if (cluster.length > 1) {
+      const others = [...new Set(cluster.flatMap(x => x.hosts).filter(h => h !== "boamp.fr"))].sort();
+      $("cluster").hidden = false;
+      $("cluster-title").textContent = `${nf.format(cluster.length)} deadlines are exactly 1 h 00 min apart: boamp.fr against ${others.join(", ")}`;
+      const eg = cluster[0].c.values, a = eg.find(v => v.host === "boamp.fr"), b = eg.find(v => v.host !== "boamp.fr") || eg[0];
+      $("cluster-eg").replaceChildren("For example: ", el("b", {}, a.display), " on boamp.fr, ", el("b", {}, b.display), ` on ${b.host}.`);
+      $("cluster-toggle").textContent = state.open ? "Hide these rows" : `Show all ${nf.format(cluster.length)}`;
+      $("cluster-toggle").setAttribute("aria-expanded", state.open ? "true" : "false");
+      if (!state.open) list = list.filter(x => !x.boamp);
+    }
+  } else {
+    list = groups.filter(inScope);
+  }
+
+  const pages = Math.max(1, Math.ceil(list.length / PAGE));
+  if (state.page > pages) state.page = pages;
+  const from = (state.page - 1) * PAGE, shown = list.slice(from, from + PAGE);
+  const head = isConflicts
+    ? el("div", {class: "row headrow"}, el("div", {}, "Field"), el("div", {}, "One source says"), el("div", {}, "The other says"), el("div", {style: "justify-self:end"}, "Difference"))
+    : el("div", {class: "row headrow"}, el("div", {}, "Where"), el("div", {style: "grid-column:2/4"}, "Tender and its records"), el("div", {style: "justify-self:end"}, "Evidence"));
+  $("rows").replaceChildren(...(shown.length ? [head, ...shown.map(isConflicts ? conflictRow : groupRow)] : [el("div", {class: "empty"},
+    el("b", {}, isConflicts ? "No disagreements match" : "No matched tenders match"),
+    !$("cluster").hidden ? "Everything under this filter is in the group above." : "Remove a filter or try a shorter search.")]));
+  $("range").textContent = list.length ? `${nf.format(from + 1)}–${nf.format(Math.min(list.length, from + PAGE))} of ${nf.format(list.length)}`
+    + (!isConflicts && data.truncated ? ` · the comparison lists the first ${nf.format(groups.length)} of ${nf.format(s.groups)} matched tenders` : "") : "0 rows";
+  $("pageno").textContent = `Page ${nf.format(state.page)} of ${nf.format(pages)}`;
+  $("prev").disabled = state.page <= 1;
+  $("next").disabled = state.page >= pages;
+}
+
+// ---- load ----------------------------------------------------------------------------------------------------------
+async function load(force) {
+  const slow = setTimeout(() => { if (!data || force) $("lede").textContent = "Comparing every served tender across portals. The first run after new reads takes about half a minute."; }, 1200);
+  try {
+    const r = await fetch("/_ui/crossref" + (force ? "?refresh=true" : ""));
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    data = await r.json();
+    prepare();
+    $("error").hidden = true;
+    $("ui").hidden = false;
+    render();
+    document.body.setAttribute("data-ready", "");
+  } catch (e) {
+    $("error").hidden = false;
+    $("error").textContent = `Could not load the comparison: ${e.message}`;
+  } finally { clearTimeout(slow); }
+}
+let typing = null;
+$("q").addEventListener("input", ev => { clearTimeout(typing); const v = ev.target.value.trim(); typing = setTimeout(() => update({q: v}, {replace: true}), 150); });
+$("src").addEventListener("change", ev => update({src: ev.target.value}));
+$("sort").addEventListener("change", ev => update({sort: ev.target.value}));
+document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => update({view: b.dataset.view, src: "", f: "all"})));
+$("cluster-toggle").addEventListener("click", () => update({open: !state.open}));
+$("prev").addEventListener("click", () => { update({page: state.page - 1}); scrollTo({top: 0}); });
+$("next").addEventListener("click", () => { update({page: state.page + 1}); scrollTo({top: 0}); });
+addEventListener("popstate", () => { state = readState(); if (data) render(); });
+$("refresh").addEventListener("click", async ev => {
+  ev.target.disabled = true; ev.target.textContent = "Computing…";
+  await load(true);
+  ev.target.disabled = false; ev.target.textContent = "Recompute";
+});
+load(false);
+</script>
+</body>
+</html>

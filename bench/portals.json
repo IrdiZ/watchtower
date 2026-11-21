@@ -1,0 +1,119 @@
+[
+ {
+  "name": "tenderned",
+  "start": "https://www.tenderned.nl",
+  "truth": [
+   "https://www.tenderned.nl/aankondigingen/overzicht",
+   "https://www.tenderned.nl/papi/tenderned-rs-tns/v2/publicaties"
+  ]
+ },
+ {
+  "name": "ezamowienia-pl",
+  "start": "https://ezamowienia.gov.pl",
+  "truth": [
+   "https://ezamowienia.gov.pl/mp-client/search/list"
+  ]
+ },
+ {
+  "name": "achatpublic-fr",
+  "start": "https://www.achatpublic.com",
+  "truth": [
+   "https://www.achatpublic.com/sdm/ent/gen/ent_recherche.do",
+   "https://www.achatpublic.com/sdm/ent2/gen/rechercheCsl.action"
+  ]
+ },
+ {
+  "name": "etenders-ie",
+  "start": "https://www.etenders.gov.ie",
+  "truth": [
+   "https://www.etenders.gov.ie/epps/quickSearchAction.do",
+   "https://www.etenders.gov.ie/epps/viewCFTSAction.do"
+  ]
+ },
+ {
+  "name": "boamp-fr",
+  "start": "https://www.boamp.fr",
+  "truth": [
+   "https://www.boamp.fr/pages/recherche/",
+   "https://www.boamp.fr/pages/recherche/?disjunctive.type_marche&disjunctive.descripteur_code&disjunctive.dc&disjunctive.code_departement&disjunctive.type_avis&disjunctive.famille&sort=dateparution&refine.type_avis=1&q.filtre_etat=(NOT%20%23null(datelimitereponse)%20AND%20datelimitereponse%3E%3D%222026-11-20%22)%20OR%20(%23null(datelimitereponse)%20AND%20datefindiffusion%3E%3D%222026-11-20%22)#resultarea"
+  ]
+ },
+ {
+  "name": "place-fr",
+  "start": "https://www.marches-publics.gouv.fr",
+  "truth": [
+   "https://www.marches-publics.gouv.fr/?page=Entreprise.EntrepriseAdvancedSearch&AllCons"
+  ]
+ },
+ {
+  "name": "maximilien-fr",
+  "start": "https://marches.maximilien.fr",
+  "truth": [
+   "https://marches.maximilien.fr/?page=Entreprise.EntrepriseAdvancedSearch&AllCons"
+  ]
+ },
+ {
+  "name": "marches-securises-fr",
+  "start": "https://www.marches-securises.fr",
+  "truth": [
+   "https://v2.marches-securises.fr/entreprise/?module=liste_consultations",
+   "https://www.marches-securises.fr/consultation",
+   "https://www.marches-securises.fr/entreprise/?module=liste_consultations"
+  ]
+ },
+ {
+  "name": "placsp-es",
+  "start": "https://contrataciondelestado.es",
+  "truth": [
+   "https://contrataciondelestado.es/wps/portal/plataforma/buscadores/busqueda"
+  ]
+ },
+ {
+  "name": "oeffentlichevergabe-de",
+  "start": "https://oeffentlichevergabe.de",
+  "truth": [
+   "https://oeffentlichevergabe.de/ui/en/search/",
+   "https://oeffentlichevergabe.de/ui/de/search/"
+  ]
+ },
+ {
+  "name": "vergabe-westfalen-de",
+  "start": "https://www.vergabe-westfalen.de",
+  "truth": [
+   "https://www.vergabe-westfalen.de/VMPSatellite/company/announcements/categoryOverview.do",
+   "https://www.vergabe-westfalen.de/VMPSatellite/company/welcome.do"
+  ]
+ },
+ {
+  "name": "brandenburg-de",
+  "start": "https://vergabemarktplatz.brandenburg.de",
+  "truth": [
+   "https://vergabemarktplatz.brandenburg.de/VMPSatellite/company/announcements/categoryOverview.do",
+   "https://vergabemarktplatz.brandenburg.de/VMPSatellite/company/welcome.do"
+  ]
+ },
+ {
+  "name": "evergabe-online-de",
+  "start": "https://www.evergabe-online.de",
+  "truth": [
+   "https://www.evergabe-online.de/search.html"
+  ]
+ },
+ {
+  "name": "simap-ch",
+  "start": "https://www.simap.ch",
+  "truth": [
+   "https://www.simap.ch/en",
+   "https://www.simap.ch/rest/publications/v2/project/project-search"
+  ]
+ },
+ {
+  "name": "findtender-gb",
+  "start": "https://www.find-tender.service.gov.uk",
+  "truth": [
+   "https://www.find-tender.service.gov.uk/Search/Results",
+   "https://www.find-tender.service.gov.uk/search/opportunities",
+   "https://www.find-tender.service.gov.uk/search/opportunities?keyword=&filters.status=tender&filters.authority-name=&filters.value-min=&filters.value-max=&action=filter&search-flow-id=875accf6346a49a6bacbb80bd23db90f&sort=newest"
+  ]
+ }
+]

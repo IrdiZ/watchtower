@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verification · Watchtower</title>
+<link rel="stylesheet" href="/_ui/static/ui.css"><script src="/_ui/static/nav.js" defer></script>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--wt-bg); color:var(--wt-text); font:14px/1.5 var(--wt-font); }
+  h1, h2, h3, p, dl, dd, ul { margin:0; }
+  a { color:var(--wt-accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  a:focus-visible { outline:2px solid var(--wt-accent); outline-offset:2px; border-radius:4px; }
+  main { padding-block:32px 64px; max-width:1200px; }
+  .crumb { color:var(--wt-muted); font-size:13px; }
+  .head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 24px; margin:8px 0 24px; }
+  h1 { font-size:28px; font-weight:600; letter-spacing:-.02em; line-height:1.2; overflow-wrap:anywhere; }
+  .head p { color:var(--wt-muted); margin-top:4px; }
+  h2 { font-size:18px; font-weight:600; margin:40px 0 4px; }
+  .sub { color:var(--wt-muted); font-size:13px; margin-bottom:16px; max-width:80ch; }
+  .panel { background:var(--wt-surface); border:1px solid var(--wt-border); border-radius:var(--wt-radius); box-shadow:var(--wt-shadow); }
+
+  .score { display:grid; grid-template-columns:minmax(0, 5fr) minmax(0, 7fr); }
+  .score-main { padding:24px; }
+  .score-main .k { color:var(--wt-muted); font-size:13px; }
+  .big { font:500 64px/1.1 var(--wt-mono); letter-spacing:-.03em; font-variant-numeric:tabular-nums; margin-top:4px; }
+  .big.ok { color:var(--wt-ok); } .big.warn { color:var(--wt-warn); } .big.bad { color:var(--wt-bad); }
+  .bound { margin:4px 0 16px; color:var(--wt-muted); }
+  .bound b { color:var(--wt-text); font:500 14px var(--wt-mono); }
+  .score-main .wt-meter { height:12px; border-radius:6px; }
+  .scale { display:flex; justify-content:space-between; margin-top:4px; color:var(--wt-faint); font:11px var(--wt-mono); }
+  .facts { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); border-left:1px solid var(--wt-border); }
+  .facts div { padding:20px 24px; border-bottom:1px solid var(--wt-border); border-right:1px solid var(--wt-border); min-width:0; }
+  .facts div:nth-child(3n) { border-right:0; }
+  .facts div:nth-last-child(-n+3) { border-bottom:0; }
+  .facts dt { color:var(--wt-muted); font-size:12px; }
+  .facts dd { font:500 20px/1.4 var(--wt-mono); font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .facts dd small { font:12px var(--wt-font); color:var(--wt-muted); }
+  .facts dd.text { font:500 15px/28px var(--wt-font); }
+
+  .explain { padding:24px; }
+  .explain .wt-state { margin-bottom:12px; }
+  details.group > summary { cursor:pointer; margin-top:24px; }
+  details.group > summary .group-title { display:inline; }
+  details.group > .group-sub { margin-top:4px; }
+  .explain h3 { font-size:18px; font-weight:600; }
+  .explain p { margin-top:8px; max-width:80ch; }
+  .explain .raw { color:var(--wt-muted); font:12px/1.5 var(--wt-mono); overflow-wrap:anywhere; }
+
+  .fields { padding:8px 24px; }
+  .field { display:grid; grid-template-columns:120px minmax(0, 1fr) 64px 220px; gap:16px; align-items:center; padding:12px 0; border-top:1px solid var(--wt-border); }
+  .field:first-child { border-top:0; }
+  .field .n { font-weight:500; }
+  .field .pct { text-align:right; font:500 14px var(--wt-mono); font-variant-numeric:tabular-nums; }
+  .field .cnt { color:var(--wt-muted); font-size:12px; }
+
+  .tablewrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; font-weight:500; color:var(--wt-muted); font-size:12px; padding:12px 16px; border-bottom:1px solid var(--wt-border); white-space:nowrap; }
+  td { padding:12px 16px; border-bottom:1px solid var(--wt-border); vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td.num { font-family:var(--wt-mono); }
+  td.id { font:12px/1.6 var(--wt-mono); max-width:260px; overflow-wrap:anywhere; }
+  .cell { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; color:var(--wt-muted); }
+  .cell::before { content:""; width:10px; height:10px; border-radius:3px; background:var(--c, var(--wt-track)); flex:none; }
+  .cell.match { --c:var(--wt-ok); } .cell.mismatch { --c:var(--wt-bad); color:var(--wt-text); }
+  .cell.missing { --c:var(--wt-warn); } .cell.none { opacity:.5; }
+  .legend { display:flex; flex-wrap:wrap; gap:8px 20px; padding:12px 16px; border-top:1px solid var(--wt-border); font-size:12px; }
+
+  .diffs { display:grid; gap:12px; }
+  .diff { padding:16px 20px; }
+  .diff-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-bottom:12px; }
+  .diff-head .f { font-weight:600; }
+  .diff-head .t { color:var(--wt-muted); font:12px var(--wt-mono); overflow-wrap:anywhere; }
+  .diff-head a { margin-left:auto; font-size:13px; white-space:nowrap; }
+  .pair { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
+  .pair div { padding:12px; border-radius:var(--wt-radius-s); background:var(--wt-surface-2); min-width:0; }
+  .pair span { display:block; color:var(--wt-muted); font-size:12px; margin-bottom:4px; }
+  .pair code { font:13px/1.5 var(--wt-mono); overflow-wrap:anywhere; white-space:pre-wrap; }
+  .pair code.empty { color:var(--wt-faint); }
+  .note { margin-top:8px; color:var(--wt-muted); font-size:12px; }
+  .group-title { font-size:14px; font-weight:600; margin:24px 0 4px; }
+  .group-title:first-child { margin-top:0; }
+  .group-sub { color:var(--wt-muted); font-size:12px; margin-bottom:12px; }
+  .empty { color:var(--wt-muted); padding:24px; }
+  #error { color:var(--wt-bad); }
+  @media (max-width:900px) {
+    .score { grid-template-columns:minmax(0, 1fr); }
+    .facts { border-left:0; border-top:1px solid var(--wt-border); }
+    .field { grid-template-columns:96px minmax(0, 1fr) 48px; }
+    .field .cnt { grid-column:1 / -1; margin-top:-8px; }
+  }
+  @media (max-width:600px) {
+    main { padding-block:24px 48px; }
+    h1 { font-size:24px; } .big { font-size:48px; }
+    .facts { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .facts div:nth-child(n) { border-right:1px solid var(--wt-border); border-bottom:1px solid var(--wt-border); padding:16px; }
+    .facts div:nth-child(2n) { border-right:0; }
+    .facts div:nth-last-child(-n+2) { border-bottom:0; }
+    .pair { grid-template-columns:minmax(0, 1fr); }
+    .fields { padding:8px 16px; } .score-main { padding:16px; }
+    .diff-head a { margin-left:0; }
+  }
+</style>
+</head>
+<body>
+<main class="wt-frame">
+  <p class="crumb"><a href="/">Dashboard</a> / <a href="/_ui/verifier">Verifier</a> / Audit</p>
+  <div class="head">
+    <div><h1 id="host">Verification</h1><p id="lede">Loading the latest audit…</p></div>
+    <div id="head-actions"></div>
+  </div>
+  <p id="error" role="status" hidden></p>
+  <div id="content"></div>
+</main>
+<script>
+const pid = decodeURIComponent(location.pathname.split("/")[3] || "");
+const number = new Intl.NumberFormat();
+const dateTime = new Intl.DateTimeFormat(undefined, {month:"short", day:"numeric", hour:"2-digit", minute:"2-digit", timeZoneName:"short"});
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[c]));
+const pct = v => v === null || v === undefined ? "–" : Math.round(v * 100) + "%";
+const FIELDS = ["title", "buyerName", "publicationDate", "submissionDeadline", "status", "documents"];
+const NAMES = {title:"Title", buyerName:"Buyer", publicationDate:"Published", submissionDeadline:"Deadline", status:"Status", documents:"Documents"};
+const OUTCOME = {match:"match", mismatch:"differs", missing:"not served", unreadable:"unreadable", pending:"pending"};
+const safeUrl = url => /^https?:\/\//i.test(url || "") ? url : null;
+const when = iso => iso ? dateTime.format(new Date(iso)) : "–";
+const usd = v => v === null || v === undefined ? "–" : "$" + Number(v).toFixed(v < 0.01 ? 5 : 4);
+const tone = (status, acc) => status === "degraded" ? (acc < 0.8 ? "bad" : "warn") : "ok";
+
+// What a "not possible: …" status means, in plain words. Patterns follow audit.py.
+function plainNotPossible(status) {
+  const s = status || "";
+  const tail = " No accuracy figure exists for this audit. It says nothing about whether the served data is right or wrong.";
+  if (/no served tenders/.test(s)) return ["Nothing to sample", "This portal serves no open or withdrawn tenders yet, so there was nothing to check." + tail];
+  if (/renders only with JavaScript/.test(s)) return ["The tender pages need a browser", "The sampled tender pages only show their content after running JavaScript, and the audit is allowed just a few browser renders per run. The pages it could open as plain HTML were empty shells." + tail];
+  if (/showed no tender values/.test(s)) return ["The source pages showed nothing to compare", "The audit opened each sampled tender's own page, but the model found no title, buyer, date or id on it. This usually means the address leads to a search page, a consent wall or an empty shell instead of the notice." + tail];
+  if (/none of the audited fields/.test(s)) return ["The sources show none of the checked fields", "The pages opened, but none of the six checked fields appeared on them in a comparable form." + tail];
+  if (/request budget/.test(s)) return ["The request budget ran out", "The audit stopped before the first tender was compared, because it had used its allowance of requests to the portal." + tail];
+  if (/model unavailable/.test(s)) return ["The model was not available", "The audit needs a model to read each source page. It was unavailable or over its budget, so no page was read." + tail];
+  if (/HTTP \d+/.test(s)) return ["The portal refused the tender pages", `The sampled tender pages answered with an error (${(s.match(/HTTP \d+/) || [""])[0]}), so they could not be read.` + tail];
+  if (/no source address/.test(s)) return ["The tenders have no source address", "The served tenders carry no link to their own page, so there is no source to compare against." + tail];
+  return ["This audit could not compare anything", "None of the sampled tender sources could be read." + tail];
+}
+
+function fieldRows(by) {
+  const keys = FIELDS.filter(f => by[f]).concat(Object.keys(by).filter(f => !FIELDS.includes(f)));
+  if (!keys.length) return '<p class="empty">No field was compared in this audit.</p>';
+  return keys.map(f => {
+    const b = by[f], acc = b.checked ? b.matched / b.checked : null;
+    const cls = acc === null ? "none" : acc >= 0.9 ? "" : acc >= 0.8 ? "warn" : "bad";
+    const extra = [b.missing ? `${number.format(b.missing)} not served` : "", b.notCounted ? `${number.format(b.notCounted)} not counted` : ""].filter(Boolean).join(" · ");
+    return `<div class="field"><span class="n">${esc(NAMES[f] || f)}</span>
+      <div class="wt-meter ${cls} none" style="--v:${acc ?? 0}" role="img" aria-label="${esc(NAMES[f] || f)} ${pct(acc)}"></div>
+      <span class="pct">${pct(acc)}</span>
+      <span class="cnt">${number.format(b.matched)} of ${number.format(b.checked)} match${extra ? " · " + extra : ""}</span></div>`;
+  }).join("");
+}
+
+function matrix(tenders) {
+  if (!tenders.length) return "";
+  const rows = tenders.map(t => {
+    const url = safeUrl(t.url);
+    const cells = FIELDS.map(f => {
+      const r = t.fields?.[f];
+      return `<td>${r ? `<span class="cell ${esc(r)}">${esc(OUTCOME[r] || r)}</span>` : '<span class="cell none">not shown</span>'}</td>`;
+    }).join("");
+    return `<tr><td class="id">${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(t.tenderId)}</a>` : esc(t.tenderId)}</td>
+      <td>${esc(t.why)}</td>${cells}</tr>`;
+  }).join("");
+  return `<h2>Sampled tenders</h2>
+    <p class="sub">A quarter newest, a quarter oldest, a quarter with documents, the rest at random. Each source was opened fresh and read by the model without our values.</p>
+    <div class="panel"><div class="tablewrap"><table><thead><tr><th>Tender</th><th>Picked as</th>${FIELDS.map(f => `<th>${NAMES[f]}</th>`).join("")}</tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div class="legend"><span class="cell match">match</span><span class="cell mismatch">differs: counted against accuracy</span>
+      <span class="cell missing">not served: the source shows it, we do not</span><span class="cell">unreadable or pending: not counted</span>
+      <span class="cell none">not shown on the source</span></div></div>`;
+}
+
+function show(v) {
+  if (v === null || v === undefined || v === "") return '<code class="empty">nothing</code>';
+  return `<code>${esc(typeof v === "object" ? JSON.stringify(v) : v)}</code>`;
+}
+
+function differences(list) {
+  if (!list.length) return `<h2>Differences</h2><div class="panel"><p class="empty">Every compared value matched its source.</p></div>`;
+  const groups = [
+    ["mismatch", "Wrong values", "We serve a value and the source shows a different one. These lower the accuracy."],
+    ["missing", "Not served", "The source shows a value and we serve none. A coverage gap, not counted as a wrong value."],
+    ["other", "Not counted", "The source value could not be read, or our download is still in progress."],
+  ];
+  const html = groups.map(([key, title, sub]) => {
+    const items = list.filter(m => key === "other" ? !["mismatch", "missing"].includes(m.result) : m.result === key);
+    if (!items.length) return "";
+    const open = key === "mismatch";
+    return (open ? `<h3 class="group-title">${title} · ${number.format(items.length)}</h3>`
+        : `<details class="group"><summary><h3 class="group-title">${title} · ${number.format(items.length)}</h3></summary>`) +
+      `<p class="group-sub">${sub}</p><div class="diffs">` +
+      items.map(m => {
+        const url = safeUrl(m.url);
+        return `<article class="panel diff"><div class="diff-head"><span class="f">${esc(NAMES[m.field] || m.field)}</span>
+          <span class="wt-chip ${m.result === "mismatch" ? "bad" : m.result === "missing" ? "warn" : ""}">${esc(OUTCOME[m.result] || m.result)}</span>
+          <span class="t">${esc(m.tenderId)}</span>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open source page</a>` : ""}</div>
+          <div class="pair"><div><span>We serve</span>${show(m.ours)}</div><div><span>The source shows</span>${show(m.page)}</div></div>
+          ${m.note ? `<p class="note">${esc(m.note)}</p>` : ""}</article>`;
+      }).join("") + `</div>` + (open ? "" : `</details>`);
+  }).join("");
+  return `<h2>Differences</h2><p class="sub">Every value that did not match, next to what the source page shows.</p>${html}`;
+}
+
+function skipped(list) {
+  if (!list.length) return "";
+  return `<h2>Sources that could not be read</h2><p class="sub">These sampled tenders were left out of the comparison.</p>
+    <div class="panel"><div class="tablewrap"><table><thead><tr><th>Tender</th><th>Why</th><th></th></tr></thead><tbody>${list.map(s => {
+      const url = safeUrl(s.url);
+      return `<tr><td class="id">${esc(s.tenderId)}</td><td>${esc(s.why)}</td><td>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open source page</a>` : ""}</td></tr>`;
+    }).join("")}</tbody></table></div></div>`;
+}
+
+function history(list) {
+  if (!list.length) return "";
+  return `<h2>History</h2><p class="sub">The last ${number.format(list.length)} audits of this portal, newest first.</p>
+    <div class="panel"><div class="tablewrap"><table><thead><tr><th>Finished</th><th>Result</th><th class="num">Accuracy</th><th class="num">Fields</th><th class="num">Tenders</th><th class="num">Cost</th></tr></thead>
+    <tbody>${list.map(a => {
+      const np = /^not possible/.test(a.status || "");
+      return `<tr><td>${esc(when(a.finishedAt))}</td>
+        <td>${np ? `<span data-tip="${esc(a.status)}" tabindex="0">not possible</span>` : esc(a.status || "–")}</td>
+        <td class="num">${pct(a.accuracy)}</td><td class="num">${number.format(a.fieldsMatched)}/${number.format(a.fieldsChecked)}</td>
+        <td class="num">${number.format(a.sampled)}</td><td class="num">${usd(a.costUsd)}</td></tr>`;
+    }).join("")}</tbody></table></div></div>`;
+}
+
+function render(portal, data) {
+  let host = portal.url;
+  try { host = new URL(portal.url).hostname; } catch {}
+  document.getElementById("host").textContent = host;
+  document.title = `${host} · Verification · Watchtower`;
+  document.getElementById("head-actions").innerHTML =
+    `<a class="wt-btn" href="/_ui/tenders/view?portal=${encodeURIComponent(pid)}">Tenders of this portal</a>`;
+  const lede = document.getElementById("lede");
+  const a = data.latest;
+  if (!a) {
+    lede.textContent = data.running ? "The first audit is running now." : "No audit has run for this portal yet.";
+    document.getElementById("content").innerHTML = `<div class="panel"><p class="empty">Start one with “Verify now” on the portal's card on the dashboard.</p></div>`;
+    return;
+  }
+  lede.textContent = `Served values compared with the portal's own pages · audit of ${when(a.finishedAt)}` + (data.running ? " · a new audit is running" : "");
+  const np = /^not possible/.test(a.status || "") || a.accuracy === null || a.accuracy === undefined;
+  const seconds = a.startedAt && a.finishedAt ? Math.round((new Date(a.finishedAt) - new Date(a.startedAt)) / 1000) : null;
+  const facts = `<dl class="facts">
+    <div><dt>Tenders sampled</dt><dd>${number.format(a.sampled)} <small>of ${number.format(a.requested ?? a.sampled)} asked</small></dd></div>
+    <div><dt>Fields checked</dt><dd>${number.format(a.fieldsChecked)} <small>${number.format(a.fieldsMatched)} match</small></dd></div>
+    <div><dt>Cost</dt><dd>${usd(a.costUsd)} <small>${a.modelCalls === undefined ? "" : number.format(a.modelCalls) + " model calls"}</small></dd></div>
+    <div><dt>Reader version</dt><dd>${a.specVersion === null || a.specVersion === undefined ? "–" : "v" + esc(a.specVersion)}</dd></div>
+    <div><dt>Finished</dt><dd class="text">${esc(when(a.finishedAt))}</dd></div>
+    <div><dt>Took</dt><dd>${seconds === null ? "–" : number.format(seconds) + " s"} <small>${number.format(a.requests ?? 0)} requests</small></dd></div></dl>`;
+  let top;
+  if (np) {
+    const [title, text] = plainNotPossible(a.status);
+    top = `<div class="panel explain"><span class="wt-state warn">Verification not possible</span><h3>${esc(title)}</h3><p>${esc(text)}</p><p class="raw">${esc(a.status)}</p></div>
+      <div class="panel" style="margin-top:16px"><div class="score" style="grid-template-columns:minmax(0,1fr)">${facts.replace('class="facts"', 'class="facts" style="border-left:0"')}</div></div>`;
+  } else {
+    const t = tone(a.status, a.accuracy);
+    top = `<div class="panel score"><div class="score-main"><span class="k">Accuracy${a.status === "degraded" ? " · degraded" : ""}</span>
+      <p class="big ${t}">${pct(a.accuracy)}</p>
+      <p class="bound">At least <b>${pct(a.accuracyLow95)}</b> with 95% confidence, given ${number.format(a.fieldsChecked)} fields checked</p>
+      <div class="wt-meter ${t === "ok" ? "" : t}" style="--v:${a.accuracy};--low:${a.accuracyLow95 ?? 0}" role="img" aria-label="Accuracy ${pct(a.accuracy)}, lower bound ${pct(a.accuracyLow95)}"></div>
+      <div class="scale"><span>0</span><span>the notch marks the 95% lower bound</span><span>100%</span></div></div>${facts}</div>`;
+  }
+  const stopped = a.stopped ? `<p class="sub" style="margin-top:16px">The audit stopped early: ${esc(a.stopped)}. What was compared before that still counts.</p>` : "";
+  document.getElementById("content").innerHTML = top + stopped +
+    (np ? "" : `<h2>Accuracy by field</h2><p class="sub">Matched values out of those both we and the source show.</p><div class="panel fields">${fieldRows(a.byField || {})}</div>`) +
+    matrix(a.tenders || []) + (np ? "" : differences(a.mismatches || [])) + skipped(a.skipped || []) + history(data.history || []);
+}
+
+(async () => {
+  try {
+    const get = async url => { const r = await fetch(url); if (!r.ok) throw new Error(r.status); return r.json(); };
+    const [portal, data] = await Promise.all([get(`/portals/${encodeURIComponent(pid)}`), get(`/_ui/audit/${encodeURIComponent(pid)}`)]);
+    render(portal, data);
+  } catch {
+    document.getElementById("lede").textContent = "";
+    const error = document.getElementById("error");
+    error.textContent = "Could not load this portal's audit.";
+    error.hidden = false;
+  }
+})();
+</script>
+</body>
+</html>

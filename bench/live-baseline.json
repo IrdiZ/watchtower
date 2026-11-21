@@ -1,0 +1,75 @@
+{
+  "https://www.tenderned.nl/papi/tenderned-rs-tns/v2/publicaties?page=0&size=20": {
+    "tenders": 2829
+  },
+  "https://www.tenderned.nl/aankondigingen/overzicht": {
+    "tenders": 2829
+  },
+  "https://www.marches-publics.gouv.fr": {
+    "tenders": 1641
+  },
+  "https://oeffentlichevergabe.de/ui/en/search/": {
+    "tenders": 12660
+  },
+  "https://www.vergabe-westfalen.de/VMPSatellite": {
+    "tenders": 227
+  },
+  "https://ezamowienia.gov.pl": {
+    "tenders": 1913,
+    "allowPartial": true
+  },
+  "https://marches.maximilien.fr": {
+    "tenders": 389
+  },
+  "https://www.evergabe-online.de": {
+    "tenders": 989
+  },
+  "https://contrataciondelestado.es/sindicacion/sindicacion_643/licitacionesPerfilesContratanteCompleto3.atom": {
+    "tenders": 5425,
+    "allowPartial": true,
+    "tolerance": 1.0
+  },
+  "https://www.oeffentlichevergabe.de/ui/de/advancedSearch": {
+    "tenders": 7545,
+    "allowPartial": true,
+    "tolerance": 0.5
+  },
+  "https://www.simap.ch": {
+    "tenders": 1454,
+    "allowPartial": true,
+    "tolerance": 1.0
+  },
+  "https://www.achatpublic.com": {
+    "tenders": 718
+  },
+  "https://www.etenders.gov.ie": {
+    "tenders": 614
+  },
+  "https://www.meinauftrag.rib.de/public/publications": {
+    "tenders": 1092
+  },
+  "https://www.simap.ch/rest/publications/v2/project/project-search?lang=de&lang=fr&lang=it&lang=en&orderAddressCountryOnlySwitzerland=false": {
+    "tenders": 1454,
+    "allowPartial": true,
+    "tolerance": 1.0
+  },
+  "https://vergabemarktplatz.brandenburg.de/VMPSatellite/company/welcome.do": {
+    "tenders": 1587
+  },
+  "https://www.hankintailmoitukset.fi/en/search?type=ContractNotices": {
+    "tenders": 1423
+  },
+  "https://marches.megalis.bretagne.bzh/?page=Entreprise.EntrepriseAdvancedSearch&AllCons&EnCours": {
+    "tenders": 572,
+    "allowPartial": true
+  },
+  "https://pmp.b2g.etat.lu/?page=Entreprise.EntrepriseAdvancedSearch&AllCons&EnCours": {
+    "tenders": 270
+  },
+  "https://www.doffin.no/search?searchString=&type=ANNOUNCEMENT_OF_COMPETITION&status=ACTIVE": {
+    "tenders": 889
+  },
+  "https://www.alsacemarchespublics.eu/?page=Entreprise.EntrepriseAdvancedSearch&AllCons&EnCours": {
+    "tenders": 187
+  }
+}

@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watchtower · Tenders</title>
+<link rel="stylesheet" href="/_ui/static/ui.css">
+<script src="/_ui/static/nav.js" defer></script>
+<style>
+  :root {
+    color-scheme: light dark;
+    --t-font: var(--wt-font, system-ui, -apple-system, "Segoe UI", sans-serif);
+    --t-radius: var(--wt-radius, 8px);
+    --t-tint: color-mix(in srgb, var(--wt-accent) 10%, var(--wt-surface));
+    --t-hover: color-mix(in srgb, var(--wt-text) 4%, var(--wt-surface));
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--wt-bg); color: var(--wt-text); font: 15px/1.45 var(--t-font); }
+  h1, p { margin: 0; }
+  a { color: var(--wt-accent); }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--wt-accent); outline-offset: 2px; }
+  .frame { width: min(100% - 48px, 1440px); margin-inline: auto; padding-block: 24px 56px; }
+
+  .head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; }
+  h1 { font-size: 24px; font-weight: 650; letter-spacing: -.01em; }
+  .count { color: var(--wt-muted); font-variant-numeric: tabular-nums; }
+  .count b { color: var(--wt-text); font-weight: 650; }
+
+  .bar { display: grid; grid-template-columns: minmax(220px, 1fr) auto auto auto; gap: 12px; margin-top: 18px; align-items: center; }
+  .field { height: 38px; padding: 0 12px; border: 1px solid var(--wt-border); border-radius: var(--t-radius);
+    background: var(--wt-surface); }
+  input.field { width: 100%; }
+  input.field::placeholder { color: var(--wt-muted); }
+  select.field { padding-right: 8px; cursor: pointer; }
+  .seg { display: inline-flex; border: 1px solid var(--wt-border); border-radius: var(--t-radius); overflow: hidden;
+    background: var(--wt-surface); height: 38px; }
+  .seg button { border: 0; background: none; padding: 0 13px; cursor: pointer; color: var(--wt-muted); white-space: nowrap; }
+  .seg button + button { border-left: 1px solid var(--wt-border); }
+  .seg button:hover { color: var(--wt-text); background: var(--t-hover); }
+  .seg button[aria-pressed="true"] { color: var(--wt-accent); background: var(--t-tint); font-weight: 600; }
+
+  .facets { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; margin-top: 16px; align-items: start; }
+  .facets .lab { color: var(--wt-muted); font-size: 13px; padding-top: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 10px; cursor: pointer;
+    border: 1px solid var(--wt-border); border-radius: 999px; background: var(--wt-surface); font-size: 13.5px; white-space: nowrap; }
+  .chip:hover { border-color: var(--wt-muted); }
+  .chip .n { color: var(--wt-muted); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+  .chip[aria-pressed="true"] { border-color: var(--wt-accent); background: var(--t-tint); color: var(--wt-accent); font-weight: 600; }
+  .chip[aria-pressed="true"] .n { color: inherit; font-weight: 500; }
+  .chip.zero:not([aria-pressed="true"]) { opacity: .5; }
+  details.docs { margin-top: 6px; font-size: 13px; }
+  details.docs summary { cursor: pointer; color: var(--wt-accent); font-weight: 500; width: max-content; }
+  details.docs ul { margin: 6px 0 2px; padding: 0; list-style: none; display: grid; gap: 4px; }
+  details.docs li { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+  details.docs li a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  details.docs li .sz { color: var(--wt-muted); font-variant-numeric: tabular-nums; flex: none; font-size: 12px; }
+  .clear { border: 0; background: none; color: var(--wt-accent); cursor: pointer; padding: 0 6px; height: 30px; font-size: 13.5px; }
+  .clear:hover { text-decoration: underline; }
+
+  .panel { margin-top: 18px; border: 1px solid var(--wt-border); border-radius: calc(var(--t-radius) + 2px);
+    background: var(--wt-surface); overflow: hidden; }
+  .panel.busy tbody { opacity: .55; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th { text-align: left; font-size: 12.5px; font-weight: 600; color: var(--wt-muted); padding: 10px 16px;
+    border-bottom: 1px solid var(--wt-border); background: var(--wt-bg); }
+  td { padding: 11px 16px; border-top: 1px solid var(--wt-border); vertical-align: top; overflow-wrap: anywhere; }
+  tbody tr:first-child td { border-top: 0; }
+  tbody tr:hover { background: var(--t-hover); }
+  col.c-deadline { width: 220px; } col.c-source { width: 240px; } col.c-status { width: 120px; }
+  .title { font-weight: 600; color: var(--wt-text); text-decoration: none; display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden; }
+  a.title:hover { color: var(--wt-accent); text-decoration: underline; }
+  .meta { color: var(--wt-muted); font-size: 13.5px; margin-top: 2px; }
+  .when { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .zone { color: var(--wt-muted); }
+  .rel { font-size: 13px; color: var(--wt-muted); margin-top: 2px; }
+  .rel.soon { color: var(--wt-warn); font-weight: 600; }
+  .src { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 2px 9px; border: 1px solid var(--wt-border);
+    border-radius: 6px; font-size: 13px; background: var(--wt-bg); color: var(--wt-text); cursor: pointer; }
+  .src:hover { border-color: var(--wt-accent); }
+  .src .cc { color: var(--wt-muted); font-size: 11.5px; font-weight: 650; }
+  .src .h { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .status { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+  .status.open { color: var(--wt-ok); background: color-mix(in srgb, var(--wt-ok) 12%, transparent); }
+  .status.closed { color: var(--wt-muted); background: color-mix(in srgb, var(--wt-muted) 14%, transparent); }
+  .status.withdrawn { color: var(--wt-warn); background: color-mix(in srgb, var(--wt-warn) 14%, transparent); }
+  .empty { padding: 40px 16px; text-align: center; color: var(--wt-muted); }
+  .empty b { display: block; color: var(--wt-text); font-size: 16px; margin-bottom: 4px; }
+
+  .pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+    padding: 10px 16px; border-top: 1px solid var(--wt-border); background: var(--wt-bg); color: var(--wt-muted);
+    font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .pager .nav { display: flex; align-items: center; gap: 8px; }
+  .btn { height: 32px; padding: 0 12px; border: 1px solid var(--wt-border); border-radius: var(--t-radius);
+    background: var(--wt-surface); cursor: pointer; }
+  .btn:hover:not(:disabled) { border-color: var(--wt-muted); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .pager select { height: 32px; border: 1px solid var(--wt-border); border-radius: var(--t-radius); background: var(--wt-surface); padding: 0 6px; }
+  #error { margin-top: 14px; color: var(--wt-bad); }
+
+  @media (max-width: 1000px) {
+    .bar { grid-template-columns: 1fr 1fr; }
+    .bar input.field { grid-column: 1 / -1; }
+    .bar .seg { justify-self: start; }
+    col.c-source { width: 180px; }
+  }
+  @media (max-width: 720px) {
+    .frame { width: calc(100% - 32px); padding-top: 16px; }
+    .bar { grid-template-columns: 1fr 1fr; }
+    .bar .seg { grid-column: 1 / -1; width: 100%; }
+    .bar .seg button { flex: 1; padding: 0 6px; }
+    .facets { grid-template-columns: 1fr; gap: 4px; }
+    .facets .lab { padding-top: 6px; }
+    .facets .chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    colgroup, thead { display: none; }
+    tr { padding: 12px 14px; border-top: 1px solid var(--wt-border); display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; }
+    tbody tr:first-child { border-top: 0; }
+    td { padding: 0; border: 0; }
+    td.t-title { grid-column: 1 / -1; }
+    td.t-deadline { grid-column: 1 / -1; display: flex; gap: 10px; align-items: baseline; }
+    td.t-status { text-align: right; }
+    .rel { margin-top: 0; }
+  }
+</style>
+</head>
+<body>
+<main class="frame">
+  <div class="head">
+    <h1>Tenders</h1>
+    <p class="count" id="count" aria-live="polite">&nbsp;</p>
+  </div>
+
+  <div class="bar">
+    <input class="field" id="q" type="search" placeholder="Search title, buyer or reference" aria-label="Search tenders" autocomplete="off">
+    <div class="seg" role="group" aria-label="Closing">
+      <button type="button" data-closing="">Any deadline</button>
+      <button type="button" data-closing="7">Closing in 7 days</button>
+      <button type="button" data-closing="30">30 days</button>
+    </div>
+    <button type="button" class="chip" id="docs" aria-pressed="false" title="Only tenders whose documents we downloaded">
+      <span>With documents</span><span class="n" id="docs-n"></span></button>
+    <select class="field" id="status" aria-label="Status">
+      <option value="open">Open</option>
+      <option value="closed">Closed</option>
+      <option value="withdrawn">Withdrawn</option>
+      <option value="all">Any status</option>
+    </select>
+    <select class="field" id="sort" aria-label="Sort">
+      <option value="deadline">Deadline, soonest first</option>
+      <option value="published">Published, newest first</option>
+      <option value="title">Title, A to Z</option>
+    </select>
+  </div>
+
+  <div class="facets">
+    <span class="lab">Source</span><div class="chips" id="portals"></div>
+    <span class="lab">Country</span><div class="chips" id="countries"></div>
+  </div>
+  <p id="error" role="alert" hidden></p>
+
+  <div class="panel" id="panel">
+    <table>
+      <colgroup><col><col class="c-deadline"><col class="c-source"><col class="c-status"></colgroup>
+      <thead><tr><th>Tender</th><th>Deadline</th><th>Source</th><th>Status</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+    </table>
+    <div class="pager">
+      <span id="range">&nbsp;</span>
+      <div class="nav">
+        <label>Rows <select id="size" aria-label="Rows per page"><option>25</option><option>50</option><option>100</option></select></label>
+        <button class="btn" id="prev" type="button">Previous</button>
+        <span id="pageno"></span>
+        <button class="btn" id="next" type="button">Next</button>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+const nf = new Intl.NumberFormat("en");
+const countryNames = {DE:"Germany", FR:"France", NL:"Netherlands", PL:"Poland", ES:"Spain", IE:"Ireland", CH:"Switzerland", UK:"United Kingdom",
+  FI:"Finland", LU:"Luxembourg", MT:"Malta", PT:"Portugal", LT:"Lithuania", BG:"Bulgaria", NO:"Norway"};
+const bytes = n => !Number.isFinite(n) ? "" : n < 1024 ? `${n} B` : n < 1048576 ? `${Math.round(n / 1024)} KB` : `${(n / 1048576).toFixed(1)} MB`;
+function docList(t) {
+  if (!t.documentCount) return null;
+  const items = (t.documents || []).filter(d => typeof d.url === "string" && d.url.startsWith("/files/")).map(d =>
+    el("li", {}, el("a", {href: d.url, download: d.name, title: d.name}, d.name), el("span", {class: "sz"}, bytes(d.size))));
+  return el("details", {class: "docs"}, el("summary", {}, `${nf.format(t.documentCount)} document${t.documentCount === 1 ? "" : "s"}`),
+    el("ul", {}, items));
+}
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const $ = id => document.getElementById(id);
+
+// ---- state lives in the query string -------------------------------------------------------------------------------
+function readState() {
+  const p = new URLSearchParams(location.search);
+  const int = (k, d) => { const n = parseInt(p.get(k), 10); return Number.isFinite(n) && n > 0 ? n : d; };
+  return {
+    q: p.get("q") || "", portal: p.getAll("portal"), country: p.getAll("country").map(c => c.toUpperCase()),
+    status: ["open","closed","withdrawn","all"].includes(p.get("status")) ? p.get("status") : "open",
+    closing: ["7","30"].includes(p.get("closing")) ? p.get("closing") : "",
+    sort: ["deadline","published","title"].includes(p.get("sort")) ? p.get("sort") : "deadline",
+    page: int("page", 1), size: [25,50,100].includes(int("size", 25)) ? int("size", 25) : 25,
+    docs: p.get("docs") === "1",
+  };
+}
+function toParams(s, forUrl) {
+  const p = new URLSearchParams();
+  if (s.q) p.set("q", s.q);
+  s.portal.forEach(x => p.append("portal", x));
+  s.country.forEach(x => p.append("country", x));
+  if (!forUrl || s.status !== "open") p.set("status", s.status);
+  if (s.closing) p.set("closing", s.closing);
+  if (s.docs) p.set("docs", forUrl ? "1" : "true");
+  if (!forUrl || s.sort !== "deadline") p.set("sort", s.sort);
+  if (!forUrl || s.page !== 1) p.set("page", s.page);
+  if (!forUrl || s.size !== 25) p.set("size", s.size);
+  return p;
+}
+let state = readState();
+
+function el(tag, attrs, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") node.className = v; else node.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c === null || c === undefined || c === false) continue;
+    node.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return node;
+}
+const safeUrl = u => typeof u === "string" && /^https?:\/\//i.test(u) ? u : null;
+
+// The deadline as the portal states it: its own wall-clock time and zone, read from the ISO offset.
+function zoneName(offset, country) {
+  if (offset === "Z" || offset === "+00:00") return country === "IE" || country === "UK" ? "GMT" : "UTC";
+  if (offset === "+01:00") return country === "IE" ? "IST" : country === "UK" ? "BST" : "CET";
+  if (offset === "+02:00") return "CEST";
+  return "UTC" + offset;
+}
+function deadlineParts(iso, country) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/.exec(iso || "");
+  if (!m) return null;
+  const date = `${+m[3]} ${MONTHS[+m[2] - 1]} ${m[1]}`;
+  if (!m[4]) return {date, time: "", zone: "", at: null};
+  return {date, time: `${m[4]}:${m[5]}`, zone: m[6] ? zoneName(m[6], country) : "", at: m[6] ? new Date(iso) : null};
+}
+function relative(at) {
+  const ms = at - Date.now(), abs = Math.abs(ms), h = 3600e3, d = 24 * h;
+  const n = abs < h ? [Math.max(1, Math.round(abs / 60e3)), "min"] : abs < 2 * d ? [Math.round(abs / h), "h"] : [Math.round(abs / d), "days"];
+  return {text: ms >= 0 ? `in ${n[0]} ${n[1]}` : `${n[0]} ${n[1]} ago`, soon: ms >= 0 && ms < 3 * d};
+}
+function shortDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
+  return m ? `${+m[3]} ${MONTHS[+m[2] - 1]} ${m[1]}` : null;
+}
+
+// ---- render --------------------------------------------------------------------------------------------------------
+function chip(label, count, pressed, onClick, title) {
+  const b = el("button", {type: "button", class: "chip" + (count ? "" : " zero"), "aria-pressed": pressed ? "true" : "false", title},
+    el("span", {}, label), el("span", {class: "n"}, nf.format(count)));
+  b.addEventListener("click", onClick);
+  return b;
+}
+function toggle(list, value) { return list.includes(value) ? list.filter(x => x !== value) : [...list, value]; }
+
+function render(data) {
+  const s = data.served;
+  const statusWord = {open: "open tenders", closed: "closed tenders", withdrawn: "withdrawn tenders", all: "tenders"}[state.status];
+  const servedN = state.status === "all" ? s.all : s[state.status];
+  const filtered = data.total !== servedN;
+  $("count").replaceChildren(
+    ...(filtered ? [el("b", {}, nf.format(data.total)), " of "] : []),
+    el("b", {}, nf.format(servedN)), ` ${statusWord} from `, el("b", {}, nf.format(s.portals)), s.portals === 1 ? " portal" : " portals");
+
+  const pchips = data.facets.portals.map(p => chip(p.host, p.count, state.portal.includes(p.id),
+    () => update({portal: toggle(state.portal, p.id)}), countryNames[p.country] || null));
+  if (state.portal.length) pchips.push(clearBtn(() => update({portal: []})));
+  $("portals").replaceChildren(...pchips);
+  const cchips = data.facets.countries.filter(c => c.country).map(c => chip(countryNames[c.country] || c.country, c.count,
+    state.country.includes(c.country), () => update({country: toggle(state.country, c.country)})));
+  if (state.country.length) cchips.push(clearBtn(() => update({country: []})));
+  $("countries").replaceChildren(...cchips);
+  $("docs-n").textContent = nf.format(data.withDocuments ?? 0);
+  $("docs").classList.toggle("zero", !data.withDocuments);
+
+  const rows = data.items.map(t => {
+    const url = safeUrl(t.url);
+    const d = deadlineParts(t.submissionDeadline, t.country);
+    const rel = d && d.at && !isNaN(d.at) ? relative(d.at) : null;
+    const meta = [t.buyerName, t.referenceNumber, shortDate(t.publicationDate) && `published ${shortDate(t.publicationDate)}`].filter(Boolean).join(" · ");
+    const src = el("button", {type: "button", class: "src", title: `Show only ${t.host}`},
+      t.country ? el("span", {class: "cc"}, t.country) : null, el("span", {class: "h"}, t.host));
+    src.addEventListener("click", () => update({portal: [t.portal]}));
+    return el("tr", {},
+      el("td", {class: "t-title"},
+        url ? el("a", {class: "title", href: url, target: "_blank", rel: "noopener noreferrer"}, t.title || "(no title)")
+            : el("span", {class: "title"}, t.title || "(no title)"),
+        meta ? el("div", {class: "meta"}, meta) : null, docList(t)),
+      el("td", {class: "t-deadline"},
+        d ? el("div", {class: "when", title: d.at && !isNaN(d.at) ? `${d.at.toLocaleString()} your time` : null},
+              d.date, d.time ? ` ${d.time} ` : "", d.zone ? el("span", {class: "zone"}, d.zone) : null)
+          : el("div", {class: "zone"}, "No deadline given"),
+        rel && t.status === "open" ? el("div", {class: "rel" + (rel.soon ? " soon" : "")}, rel.text) : null),
+      el("td", {class: "t-source"}, src),
+      el("td", {class: "t-status"}, el("span", {class: `status ${t.status}`}, t.status[0].toUpperCase() + t.status.slice(1))));
+  });
+  $("rows").replaceChildren(...(rows.length ? rows : [el("tr", {}, el("td", {colspan: 4, class: "empty"},
+    el("b", {}, "No tenders match"), "Remove a filter or try a shorter search."))]));
+
+  const pages = Math.max(1, Math.ceil(data.total / data.size));
+  const from = data.total ? (data.page - 1) * data.size + 1 : 0, to = Math.min(data.total, data.page * data.size);
+  $("range").textContent = data.total ? `${nf.format(from)}–${nf.format(to)} of ${nf.format(data.total)}` : "0 tenders";
+  $("pageno").textContent = `Page ${nf.format(Math.min(data.page, pages))} of ${nf.format(pages)}`;
+  $("prev").disabled = data.page <= 1;
+  $("next").disabled = data.page >= pages;
+}
+function clearBtn(fn) { const b = el("button", {type: "button", class: "clear"}, "Clear"); b.addEventListener("click", fn); return b; }
+
+function syncControls() {
+  if (document.activeElement !== $("q")) $("q").value = state.q;
+  $("status").value = state.status; $("sort").value = state.sort; $("size").value = String(state.size);
+  document.querySelectorAll("[data-closing]").forEach(b => b.setAttribute("aria-pressed", b.dataset.closing === state.closing ? "true" : "false"));
+  $("docs").setAttribute("aria-pressed", state.docs ? "true" : "false");
+}
+
+// ---- load ----------------------------------------------------------------------------------------------------------
+let inflight = null;
+async function load() {
+  syncControls();
+  if (inflight) inflight.abort();
+  const ctl = inflight = new AbortController();
+  $("panel").classList.add("busy");
+  try {
+    const r = await fetch("/_ui/tenders?" + toParams(state, false), {signal: ctl.signal});
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    // A link may name a registration that is not the served one for its host: the API answers with the served one.
+    if (data.selectedPortals.join() !== [...state.portal].sort().join()) {
+      state.portal = data.selectedPortals;
+      const qs = toParams(state, true).toString();
+      history.replaceState(null, "", location.pathname + (qs ? "?" + qs : ""));
+    }
+    const pages = Math.max(1, Math.ceil(data.total / data.size));
+    if (state.page > pages) return update({page: pages}, true);
+    $("error").hidden = true;
+    render(data);
+  } catch (e) {
+    if (e.name === "AbortError") return;
+    $("error").hidden = false;
+    $("error").textContent = `Could not load tenders: ${e.message}`;
+  } finally {
+    if (inflight === ctl) { inflight = null; $("panel").classList.remove("busy"); }
+  }
+}
+function update(patch, keepPage) {
+  state = {...state, ...patch};
+  if (!keepPage && !("page" in patch)) state.page = 1;
+  const qs = toParams(state, true).toString();
+  history.pushState(null, "", location.pathname + (qs ? "?" + qs : ""));
+  load();
+}
+
+let typing = null;
+$("q").addEventListener("input", ev => {
+  clearTimeout(typing);
+  const value = ev.target.value.trim();
+  typing = setTimeout(() => {
+    state = {...state, q: value, page: 1};
+    const qs = toParams(state, true).toString();
+    history.replaceState(null, "", location.pathname + (qs ? "?" + qs : ""));  // typing does not fill the back history
+    load();
+  }, 180);
+});
+$("status").addEventListener("change", ev => update({status: ev.target.value}));
+$("sort").addEventListener("change", ev => update({sort: ev.target.value}));
+$("size").addEventListener("change", ev => update({size: +ev.target.value}));
+document.querySelectorAll("[data-closing]").forEach(b => b.addEventListener("click", () => update({closing: b.dataset.closing})));
+$("docs").addEventListener("click", () => update({docs: !state.docs}));
+$("prev").addEventListener("click", () => { update({page: state.page - 1}); scrollTo({top: 0}); });
+$("next").addEventListener("click", () => { update({page: state.page + 1}); scrollTo({top: 0}); });
+addEventListener("popstate", () => { state = readState(); load(); });
+addEventListener("keydown", ev => {
+  if (ev.key === "/" && !/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) { ev.preventDefault(); $("q").focus(); }
+});
+load();
+</script>
+</body>
+</html>

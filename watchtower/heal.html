@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watchtower · Heal theater</title>
+<link rel="stylesheet" href="/_ui/static/ui.css">
+<script src="/_ui/static/nav.js" defer></script>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg:var(--wt-bg); --panel:var(--wt-surface); --deep:var(--wt-bg); --line:var(--wt-border);
+    --text:var(--wt-text); --muted:var(--wt-muted); --green:var(--wt-ok); --amber:var(--wt-warn);
+    --red:var(--wt-bad); --blue:var(--wt-accent); --action:var(--wt-accent); --ink:var(--wt-surface);
+    --radius:var(--wt-radius, 8px);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.45 var(--wt-font, system-ui, -apple-system, "Segoe UI", sans-serif); }
+  .frame { width:min(100% - 48px, 1500px); margin-inline:auto; }
+  h1, h2, h3, p, ol, ul, dl, dd { margin:0; }
+  button, select { font:inherit; }
+  button { height:38px; padding:0 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel); color:var(--text); cursor:pointer; white-space:nowrap; font-weight:550; }
+  button:hover:not(:disabled) { border-color:var(--muted); }
+  button:disabled { opacity:.45; cursor:default; }
+  button:focus-visible, select:focus-visible, a:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+  a { color:var(--action); }
+  .primary { background:var(--action); border-color:var(--action); color:var(--ink); font-weight:650; }
+  .primary:hover:not(:disabled) { border-color:var(--action); filter:brightness(1.08); }
+  .serving { --status:var(--green); }
+  .healing { --status:var(--amber); }
+  .integrating { --status:var(--blue); }
+  .failed { --status:var(--red); }
+  .muted { color:var(--muted); }
+  .num { font-variant-numeric:tabular-nums; }
+
+  .head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 20px; padding-block:24px 16px; }
+  .head h1 { font-size:24px; font-weight:650; letter-spacing:-.01em; }
+  .head .lede { color:var(--muted); font-size:15px; margin-top:2px; }
+  .head .tools { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; font-size:15px; }
+  select { height:38px; padding:0 10px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel); color:var(--text); max-width:min(420px, 70vw); }
+
+  .controls { display:flex; flex-wrap:wrap; align-items:stretch; gap:14px 0; padding:14px 18px; border:1px solid var(--line); border-radius:calc(var(--radius) + 2px); background:var(--panel); }
+  .controls .group { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-right:28px; }
+  .controls .group:last-of-type { margin-right:0; }
+  .controls .label { color:var(--muted); font-size:14px; margin-right:2px; }
+  .break { color:var(--red); border-color:color-mix(in srgb, var(--red) 45%, var(--line)); }
+  .break:hover:not(:disabled) { border-color:var(--red); background:color-mix(in srgb, var(--red) 8%, var(--panel)); }
+  .break.active { background:color-mix(in srgb, var(--red) 16%, var(--panel)); border-color:var(--red); font-weight:650; }
+  #portal-state { font-weight:650; padding:2px 9px; border-radius:6px; font-size:14px; }
+  #portal-state.broken { color:var(--red); background:color-mix(in srgb, var(--red) 13%, transparent); }
+  #portal-state.intact { color:var(--green); background:color-mix(in srgb, var(--green) 13%, transparent); }
+  #msg { color:var(--muted); font-size:14px; align-self:center; flex-basis:100%; }
+  #msg:empty { display:none; }
+  .blank { margin-top:18px; padding:48px 24px; text-align:center; border:1px dashed var(--line); border-radius:calc(var(--radius) + 2px); color:var(--muted); }
+  .blank b { display:block; color:var(--text); font-size:19px; font-weight:650; margin-bottom:4px; }
+
+  .hero { display:grid; grid-template-columns:auto 1fr auto; gap:28px; align-items:center; padding-block:26px 18px; }
+  .badge { font-size:36px; font-weight:700; letter-spacing:-.02em; color:var(--status, var(--muted)); display:flex; align-items:center; gap:14px; text-transform:capitalize; }
+  .badge .dot { width:16px; height:16px; border-radius:50%; background:var(--status, var(--muted)); }
+  .healing .badge .dot { animation:pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity:.35; } }
+  @media (prefers-reduced-motion:reduce) { .healing .badge .dot { animation:none; } }
+  .hero .reason { color:var(--muted); font-size:16px; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+  .hero .since { font-size:14px; color:var(--muted); margin-top:4px; }
+  .count { text-align:right; }
+  .count b { display:block; font-size:36px; font-weight:700; line-height:1.05; }
+  .count span { color:var(--muted); font-size:14px; }
+
+  .strip { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding-bottom:22px; }
+  .chip { display:inline-flex; gap:8px; align-items:baseline; padding:4px 11px; border-radius:6px; background:var(--panel); border:1px solid var(--line); font-size:15px; }
+  .chip:last-child { border-color:var(--status, var(--line)); }
+  .chip b { color:var(--status, var(--text)); text-transform:capitalize; }
+  .chip time { color:var(--muted); font-size:13.5px; font-variant-numeric:tabular-nums; }
+  .arrow { color:var(--muted); }
+
+  .story { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; align-items:start; }
+  .panel { min-width:0; padding:18px; border:1px solid var(--line); border-radius:calc(var(--radius) + 2px); background:var(--panel); }
+  .panel h2 { font-size:14px; font-weight:600; color:var(--muted); margin-bottom:10px; display:flex; gap:10px; align-items:baseline; justify-content:space-between; }
+  .panel h2 .step { color:var(--text); }
+  .panel .big { font-size:28px; font-weight:700; line-height:1.15; letter-spacing:-.01em; }
+  .panel .sub { color:var(--muted); font-size:14px; margin-top:4px; }
+  .panel ul { padding-left:20px; margin-top:8px; }
+  .panel li { margin-top:4px; overflow-wrap:anywhere; }
+  .panel .bad li::marker { color:var(--red); }
+  .panel dl { display:grid; grid-template-columns:auto 1fr; gap:6px 14px; margin-top:6px; }
+  .panel dt { color:var(--muted); }
+  .panel dd { font-weight:650; text-align:right; }
+  .ok { color:var(--green); }
+  .no { color:var(--red); }
+  .wait { color:var(--amber); }
+  .full { grid-column:1/-1; }
+
+  .diff { width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; table-layout:fixed; }
+  .diff th { text-align:left; color:var(--muted); font-weight:600; padding:4px 8px 4px 0; }
+  .diff td { padding:6px 8px 6px 0; border-top:1px solid var(--line); vertical-align:top; overflow-wrap:anywhere; }
+  .diff code { font:13.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .diff .old code { color:var(--red); }
+  .diff .new code { color:var(--green); }
+  .diff th:first-child, .diff td:first-child { width:28%; }
+
+  .timeline { margin-top:26px; padding-bottom:40px; }
+  .timeline h2 { font-size:17px; font-weight:650; margin-bottom:8px; }
+  .timeline ol { list-style:none; padding:0; }
+  .timeline ol { border:1px solid var(--line); border-radius:calc(var(--radius) + 2px); background:var(--panel); padding:4px 18px; }
+  .timeline li { display:grid; grid-template-columns:96px 150px 1fr; gap:14px; padding:10px 0; border-top:1px solid var(--line); font-size:15px; }
+  .timeline li:first-child { border-top:0; }
+  .timeline time { color:var(--muted); font-variant-numeric:tabular-nums; }
+  .timeline .kind { font-weight:650; color:var(--status, var(--text)); text-transform:capitalize; }
+  .timeline .kind::before { content:""; display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:9px; background:var(--status, var(--muted)); vertical-align:1px; }
+  .timeline .what { overflow-wrap:anywhere; }
+  .timeline .what small { display:block; color:var(--muted); font-size:13.5px; }
+  .empty { color:var(--muted); }
+  #load-error { color:var(--red); padding-top:10px; }
+
+  @media (max-width:1200px) { .story { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width:700px) {
+    .frame { width:calc(100% - 32px); }
+    .story { grid-template-columns:minmax(0,1fr); }
+    .hero { grid-template-columns:1fr; gap:10px; } .count { text-align:left; }
+    .badge, .count b { font-size:28px; }
+    .controls .group { margin-right:0; flex-basis:100%; }
+    .timeline li { grid-template-columns:84px 1fr; } .timeline .what { grid-column:1/-1; }
+  }
+</style>
+</head>
+<body>
+<main class="frame">
+  <header class="head">
+    <div>
+      <h1>Heal theater</h1>
+      <p class="lede">Break a portal's markup and watch the reader repair itself while the last good data keeps serving.</p>
+    </div>
+    <div class="tools">
+      <a href="/_ui/static/how-healing-works.pdf" target="_blank" rel="noopener">How healing works (PDF)</a>
+      <label class="muted" for="pick">Portal</label>
+      <select id="pick"></select>
+    </div>
+  </header>
+  <section class="controls" id="controls" hidden aria-label="Demo portal controls">
+    <div class="group">
+      <span class="label">Demo portal</span><span id="portal-state">intact</span>
+      <a id="portal-link" href="/_demo/portal/ausschreibungen" target="_blank" rel="noopener">open it</a>
+      <button id="attach" class="primary" hidden>Attach demo portal</button>
+    </div>
+    <div class="group">
+      <span class="label">Break</span>
+      <span id="breaks" style="display:contents"></span>
+    </div>
+    <div class="group">
+      <button id="restore">Restore</button>
+      <button id="refresh" class="primary">Refresh now</button>
+    </div>
+    <span id="msg" role="status"></span>
+  </section>
+  <p id="load-error" role="status" hidden></p>
+
+  <section class="blank" id="blank" hidden><b id="blank-title"></b><span id="blank-text"></span></section>
+
+  <div id="stage">
+  <section class="hero" id="hero">
+    <div class="badge"><i class="dot"></i><span id="state">…</span></div>
+    <div><p class="reason" id="reason"></p><p class="since" id="since"></p></div>
+    <div class="count"><b class="num" id="count">–</b><span>tenders served</span></div>
+  </section>
+  <div class="strip" id="strip" aria-label="State changes"></div>
+
+  <section class="story" id="story" aria-label="Latest repair"></section>
+
+  <section class="timeline">
+    <h2>Timeline</h2>
+    <ol id="events"><li class="empty">Loading…</li></ol>
+  </section>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clock = new Intl.DateTimeFormat(undefined, {hour:"2-digit", minute:"2-digit", second:"2-digit"});
+const t = iso => iso ? clock.format(new Date(iso)) : "";
+const usd = v => !Number(v) ? "$0" : "$" + Number(v).toFixed(Number(v) < 0.01 ? 4 : 3);
+const secs = s => s == null ? "–" : s < 60 ? `${s.toFixed(1)} s` : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`;
+const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + "s")}`;
+const kindWord = {attach:"Attach", read:"Read", repair:"Repair"};
+
+let demo = null, pid = null, portals = [], busy = false;
+
+async function getJSON(url, opts) {
+  const r = await fetch(url, opts);
+  if (!r.ok) throw new Error(`${url}: ${r.status}`);
+  return r.json();
+}
+async function post(url, body) {
+  return getJSON(url, {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(body || {})});
+}
+
+// The demo portal is the default. A real portal shows only when it is chosen in the picker or named in #p=.
+function choosePortal() {
+  const fromHash = new URLSearchParams(location.hash.slice(1)).get("p");
+  if (fromHash && portals.some(p => p.id === fromHash)) return fromHash;
+  if (pid && portals.some(p => p.id === pid)) return pid;
+  if (demo && demo.portalId && portals.some(p => p.id === demo.portalId)) return demo.portalId;
+  return null;
+}
+
+function renderPicker() {
+  const pick = $("pick");
+  const demoId = demo && demo.portalId;
+  const option = (p, label) => `<option value="${esc(p.id)}"${p.id === pid ? " selected" : ""}>${esc(label)}</option>`;
+  const demoPortal = portals.find(p => p.id === demoId);
+  const html = (demoPortal ? option(demoPortal, "Demo portal")
+      : `<option value=""${pid ? "" : " selected"}>Demo portal (not attached)</option>`)
+    + portals.filter(p => p.id !== demoId).map(p => option(p, p.url)).join("");
+  if (pick.dataset.html !== html) { pick.innerHTML = html; pick.dataset.html = html; }
+}
+
+function renderBlank() {
+  const none = !pid;
+  $("blank").hidden = !none;
+  $("stage").hidden = none;
+  if (!none) return;
+  const canAttach = demo && demo.enabled;
+  $("blank-title").textContent = canAttach ? "The demo portal is not attached" : "No portal chosen";
+  $("blank-text").textContent = canAttach
+    ? "Press Attach demo portal to start. Real portals are in the picker."
+    : "Choose a portal in the picker.";
+}
+
+function renderControls() {
+  const box = $("controls");
+  box.hidden = !(demo && demo.enabled);
+  if (box.hidden) return;
+  const broken = demo.mutations.length > 0;
+  const label = m => (demo.choices.find(c => c.mutation === m) || {label:m}).label;
+  $("portal-state").textContent = broken ? `broken · ${demo.mutations.map(label).join(", ")}` : "intact";
+  $("portal-state").className = broken ? "broken" : "intact";
+  $("attach").hidden = !!demo.portalId;
+  $("refresh").classList.toggle("primary", !!demo.portalId);  // one primary action: Attach until the demo portal exists
+  const html = demo.choices.map(c => `<button class="break${demo.mutations.includes(c.mutation) ? " active" : ""}"
+      data-m="${esc(c.mutation)}" title="${esc(c.what)}">${esc(c.label)}</button>`).join("");
+  const breaks = $("breaks");
+  if (breaks.dataset.html !== html) { breaks.innerHTML = html; breaks.dataset.html = html; }
+  for (const b of box.querySelectorAll("button")) b.disabled = busy || (b.id === "refresh" && !pid);
+}
+
+function renderHero(p, events) {
+  const hero = $("hero");
+  hero.className = "hero " + (p ? p.state : "");
+  $("state").textContent = p ? p.state : "no portal";
+  $("reason").textContent = p ? p.reason : (demo && demo.enabled ? "Attach the demo portal to start." : "Add a portal on the dashboard.");
+  $("count").textContent = p ? p.tenderCount : "–";
+  const states = events.filter(e => e.type === "state");
+  const last = states[states.length - 1];
+  $("since").textContent = last ? `${last.to} since ${t(last.at)}` : "";
+  $("strip").innerHTML = states.slice(-7).map((e, i) =>
+    `${i ? '<span class="arrow">→</span>' : ""}<span class="chip ${esc(e.to)}"><b>${esc(e.to)}</b><time>${t(e.at)}</time></span>`).join("");
+}
+
+function failuresList(list) {
+  return list && list.length ? `<ul class="bad">${list.map(f => `<li>${esc(f)}</li>`).join("")}</ul>` : "";
+}
+
+function renderStory(events) {
+  const runs = events.filter(e => e.type === "run");
+  const repair = [...runs].reverse().find(r => r.kind === "repair");
+  const story = $("story");
+  if (!repair) {
+    const reads = runs.filter(r => r.kind === "read" && r.result === "ok");
+    const lastRead = reads[reads.length - 1];
+    story.innerHTML = `<div class="panel full"><h2><span class="step">Waiting for a break</span></h2>
+      <p>No repair yet. ${demo && demo.enabled ? "Pick a way to break the demo portal above: the next read notices it, and Watchtower repairs itself while it keeps serving." : ""}</p></div>
+      <div class="panel full"><h2><span class="step">Regular reads</span></h2>${lastRead
+        ? `<p class="big num">${plural(lastRead.llmCalls, "model call")}</p><p class="sub">last read ${t(lastRead.finishedAt)} · ${secs(lastRead.durationS)} · ${plural(lastRead.requests, "request")}</p>`
+        : `<p class="empty">No completed read yet.</p>`}</div>`;
+    return;
+  }
+  const before = runs.filter(r => r.startedAt < repair.startedAt);
+  const noticed = [...before].reverse().find(r => r.kind === "read" || r.kind === "attach");
+  const spec = events.find(e => e.type === "spec" && e.sourceRun === repair.runId);
+  const after = runs.filter(r => r.startedAt > repair.startedAt);
+  const cached = after.find(r => r.kind === "read" && r.result);
+  const healing = [...events].reverse().find(e => e.type === "state" && e.to === "healing" && e.at <= (repair.finishedAt || "9"));
+  const healed = events.find(e => e.type === "state" && e.from === "healing" && healing && e.at > healing.at);
+  const running = !repair.result;
+
+  // 1 what broke
+  const told = repair.was && repair.was.length ? repair.was : (noticed ? noticed.failures : []);
+  const p1 = `<div class="panel"><h2><span class="step">1 · Noticed</span>${noticed ? t(noticed.finishedAt) : ""}</h2>
+    ${noticed ? `<p class="big no">Read rejected</p><p class="sub">${plural(noticed.requests, "request")} · ${secs(noticed.durationS)} · nothing published</p>
+    ${failuresList(noticed.failures.length ? noticed.failures : [noticed.summary])}` : `<p class="empty">–</p>`}</div>`;
+
+  // 2 repair
+  const attempts = repair.attempts || [];
+  const status = running ? `<span class="wait">running…</span>` : repair.result === "ok" ? `<span class="ok">repaired</span>` : `<span class="no">gave up</span>`;
+  const diff = spec && spec.changes.length ? `<table class="diff"><thead><tr><th>Path</th><th>Old</th><th>New</th></tr></thead><tbody>${
+      spec.changes.map(c => `<tr><td><code>${esc(c.path)}</code></td><td class="old">${c.old == null ? '<span class="muted">–</span>' : `<code>${esc(c.old)}</code>`}</td><td class="new">${c.new == null ? '<span class="muted">removed</span>' : `<code>${esc(c.new)}</code>`}</td></tr>`).join("")
+    }</tbody></table>` : "";
+  const p2 = `<div class="panel"><h2><span class="step">2 · Repair</span>${t(repair.startedAt)} · ${status}</h2>
+    <p class="big">${spec ? `Spec v${spec.previous} → v${spec.version}` : running ? "Re-learning the portal…" : "No new spec"}</p>
+    <p class="sub">Told the model: the old spec${spec && spec.previous ? ` v${spec.previous}` : ""}, what the read got wrong (${plural(told.length, "failure")}), and tenders it served before as hints.</p>
+    ${running ? `<p class="sub">${esc(repair.summary)}</p>` : ""}
+    ${attempts.length ? `<ul>${attempts.map(a => `<li><span class="${a.ok ? "ok" : "no"}">Attempt ${a.attempt}: ${a.ok ? "accepted" : "rejected"}</span>${a.ok ? "" : failuresList(a.failures)}</li>`).join("")}</ul>` : ""}
+    </div>`;
+  const p5 = spec ? `<div class="panel full"><h2><span class="step">What the repair changed</span>spec v${spec.previous} → v${spec.version} · ${plural(spec.changes.length, "change")}</h2>
+    ${diff || `<p class="sub">Same selectors and paths; only the evidence was renewed.</p>`}</div>` : "";
+
+  // 3 cost
+  const purposes = Object.entries(repair.llmPurposes || {}).map(([k, n]) => `${n} ${k}`).join(" · ");
+  const p3 = `<div class="panel"><h2><span class="step">3 · Cost of the repair</span></h2>
+    <p class="big num">${usd(repair.llmUsd)}</p><p class="sub">${plural(repair.llmCalls, "model call")}${purposes ? ` (${esc(purposes)})` : ""}</p>
+    <dl><dt>Requests</dt><dd class="num">${repair.requests}</dd><dt>Duration</dt><dd class="num">${running ? "…" : secs(repair.durationS)}</dd>
+    <dt>Healing took</dt><dd class="num">${healing && healed ? secs((new Date(healed.at) - new Date(healing.at)) / 1000) : "…"}</dd></dl></div>`;
+
+  // 4 proof
+  const kept = healing ? healing.tenders : null;
+  const p4 = `<div class="panel"><h2><span class="step">4 · Next read</span>${cached ? t(cached.finishedAt) : ""}</h2>
+    ${cached ? `<p class="big num ${cached.llmCalls ? "no" : "ok"}">${plural(cached.llmCalls, "model call")}</p>
+      <p class="sub">${cached.result === "ok" ? "the learned spec is reused" : "read rejected"} · ${secs(cached.durationS)} · ${plural(cached.requests, "request")}</p>`
+      : `<p class="big muted">–</p><p class="sub">${running ? "after the repair" : "press Refresh now"}</p>`}
+    <dl><dt>Served while healing</dt><dd class="num">${kept == null ? "–" : plural(kept, "tender")}</dd>
+    <dt>Served now</dt><dd class="num">${$("count").textContent}</dd></dl></div>`;
+  story.innerHTML = p1 + p2 + p3 + p4 + p5;
+}
+
+function describe(e) {
+  if (e.type === "state") {
+    return {cls:e.to, kind:e.to, what:`${e.from ? `${esc(e.from)} → ` : ""}<b>${esc(e.to)}</b> · ${plural(e.tenders, "tender")} served<small>${esc(e.reason)}</small>`};
+  }
+  if (e.type === "spec") {
+    const n = e.changes.length;
+    return {cls:"", kind:"Spec", what:`v${e.version} promoted${e.previous ? ` (was v${e.previous}; ${plural(n, "change")})` : " (first spec)"}`};
+  }
+  const res = !e.result ? "running" : e.result;
+  const cls = res === "ok" ? "serving" : res === "running" ? "integrating" : "failed";
+  return {cls, kind:`${kindWord[e.kind] || e.kind} ${res === "ok" ? "ok" : res}`,
+    what:`${e.result ? secs(e.durationS) + " · " : ""}${plural(e.requests, "request")} · ${plural(e.llmCalls, "model call")} · ${usd(e.llmUsd)}<small>${esc(e.summary)}</small>`};
+}
+
+function renderEvents(events) {
+  const list = [...events].reverse().slice(0, 40);
+  $("events").innerHTML = list.length ? list.map(e => {
+    const d = describe(e);
+    return `<li class="${esc(d.cls)}"><time>${t(e.at)}</time><span class="kind">${esc(d.kind)}</span><span class="what">${d.what}</span></li>`;
+  }).join("") : `<li class="empty">Nothing yet.</li>`;
+}
+
+async function tick() {
+  try {
+    [demo, portals] = await Promise.all([getJSON("/_ui/heal/demo"), getJSON("/portals")]);
+    pid = choosePortal();
+    renderPicker();
+    renderControls();
+    renderBlank();
+    const p = portals.find(x => x.id === pid) || null;
+    const events = pid ? (await getJSON(`/_ui/events?portal=${encodeURIComponent(pid)}`)).events : [];
+    renderHero(p, events);
+    renderStory(events);
+    renderEvents(events);
+    $("load-error").hidden = true;
+  } catch (err) {
+    $("load-error").hidden = false;
+    $("load-error").textContent = "Could not load: " + err.message;
+  }
+}
+
+async function act(fn, note) {
+  busy = true; renderControls(); $("msg").textContent = note;
+  try { await fn(); $("msg").textContent = ""; }
+  catch (err) { $("msg").textContent = "Failed: " + err.message; }
+  finally { busy = false; await tick(); }
+}
+
+$("pick").addEventListener("change", e => {
+  pid = e.target.value || null;
+  if (pid) location.hash = "p=" + encodeURIComponent(pid); else history.replaceState(null, "", location.pathname);
+  tick();
+});
+$("attach").addEventListener("click", () => act(async () => { const r = await post("/_ui/heal/attach"); location.hash = "p=" + r.id; }, "Attaching…"));
+$("restore").addEventListener("click", () => act(() => post("/_ui/heal/restore", {refresh:false}), "Restoring…"));
+$("refresh").addEventListener("click", () => act(() => post("/_ui/heal/refresh", pid ? {portal:pid} : {}), "Reading…"));
+$("breaks").addEventListener("click", e => {
+  const b = e.target.closest("button[data-m]");
+  if (b) act(() => post("/_ui/heal/break", {mutation:b.dataset.m, refresh:true}), `Breaking: ${b.textContent}…`);
+});
+tick();
+setInterval(() => { if (!busy) tick(); }, 1500);
+</script>
+</body>
+</html>

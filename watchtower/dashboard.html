@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watchtower</title>
+<link rel="stylesheet" href="/_ui/static/ui.css"><script src="/_ui/static/nav.js" defer></script>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--wt-bg); color:var(--wt-text); font:14px/1.5 var(--wt-font); }
+  h1, h2, h3, p, dl, dd, ul { margin:0; }
+  a { color:var(--wt-accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  main { padding-block:32px 64px; }
+
+  .head { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:16px 32px; margin-bottom:24px; }
+  h1 { font-size:28px; font-weight:600; letter-spacing:-.02em; line-height:1.2; }
+  .lede { margin-top:4px; color:var(--wt-muted); max-width:64ch; }
+  form { display:flex; gap:8px; align-items:flex-start; }
+  textarea { font:inherit; width:min(360px, 54vw); height:32px; min-height:32px; resize:vertical; padding:4px 12px;
+    border:1px solid var(--wt-border); border-radius:var(--wt-radius-s); color:var(--wt-text); background:var(--wt-surface); }
+  textarea::placeholder { color:var(--wt-faint); }
+  textarea:focus-visible, summary:focus-visible, a:focus-visible { outline:2px solid var(--wt-accent); outline-offset:2px; }
+  #addmsg { color:var(--wt-muted); font-size:12px; min-height:20px; margin-top:4px; }
+
+  /* hero strip: live totals */
+  .totals { display:grid; grid-template-columns:1.5fr repeat(5, 1fr); background:var(--wt-surface);
+    border:1px solid var(--wt-border); border-radius:var(--wt-radius); box-shadow:var(--wt-shadow); margin-bottom:40px; }
+  .total { display:block; min-width:0; padding:20px 24px; border-left:1px solid var(--wt-border); color:inherit; }
+  .total:first-child { border-left:0; }
+  a.total { transition:background-color .15s var(--wt-ease); }
+  a.total:hover { background:var(--wt-surface-2); text-decoration:none; }
+  a.total:first-child { border-radius:var(--wt-radius) 0 0 var(--wt-radius); }
+  .total .k { display:block; color:var(--wt-muted); font-size:13px; }
+  .total .v { display:block; margin-top:4px; font:500 28px/1.2 var(--wt-mono); font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
+  .total.lead .v { font-size:44px; line-height:1.1; color:var(--wt-accent); }
+  .total .s { display:block; margin-top:4px; color:var(--wt-faint); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  a.total .k::after { content:" \2192"; color:var(--wt-faint); }
+
+  .overview { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 16px; margin-bottom:16px; }
+  h2 { font-size:18px; font-weight:600; }
+  .states { display:flex; flex-wrap:wrap; gap:8px 20px; color:var(--wt-muted); font-size:13px; }
+  .states b { margin-right:6px; color:var(--wt-text); font:500 13px var(--wt-mono); }
+  .states > span { display:inline-flex; align-items:center; gap:8px; }
+  .dot { width:8px; height:8px; flex:none; border-radius:50%; background:var(--status, var(--wt-muted)); }
+  .serving { --status:var(--wt-ok); } .healing { --status:var(--wt-warn); }
+  .integrating { --status:var(--wt-info); } .failed { --status:var(--wt-bad); }
+
+  .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; align-items:start; }
+  .card { min-width:0; padding:20px; border:1px solid var(--wt-border); border-radius:var(--wt-radius);
+    background:var(--wt-surface); box-shadow:var(--wt-shadow); }
+  .cards.enter .card { animation:rise .4s var(--wt-ease) both; animation-delay:calc(min(var(--i), 12) * 25ms); }
+  @keyframes rise { from { opacity:0; transform:translateY(6px); } }
+  .wt-state[data-tip], .reason[data-tip], .wt-chip[data-tip], .portal-path[data-tip] { cursor:help; }
+  .card.changed .wt-state { animation:flash 1.8s var(--wt-ease); }
+  @keyframes flash { 0%, 35% { background:color-mix(in srgb, var(--s) 40%, transparent); } }
+  .card-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .site { min-width:0; }
+  h3 { font-size:16px; font-weight:600; line-height:1.5; overflow-wrap:anywhere; }
+  .portal-path { color:var(--wt-faint); font:12px/1.5 var(--wt-mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; padding:16px 0; }
+  .metrics dt { color:var(--wt-muted); font-size:12px; }
+  .metrics dd { font-size:12px; color:var(--wt-muted); }
+  .metrics b { display:block; color:var(--wt-text); font:500 20px/28px var(--wt-mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .metrics b.rel { font-family:var(--wt-font); font-size:15px; }
+  .metrics small { display:block; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .verify { display:block; padding:12px; margin-bottom:16px; border-radius:var(--wt-radius-s); background:var(--wt-surface-2); color:inherit;
+    transition:background-color .15s var(--wt-ease); }
+  a.verify:hover { background:var(--wt-track); text-decoration:none; }
+  a.verify:hover .wt-meter { background:var(--wt-border); }
+  .verify-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .verify-top span { color:var(--wt-muted); font-size:12px; }
+  .verify-top b { font:500 14px var(--wt-mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .verify-top b i { font-style:normal; font-weight:400; color:var(--wt-muted); font-size:12px; font-family:var(--wt-font); }
+  .verify .wt-meter { margin-top:8px; }
+  .verify-sub { margin-top:8px; color:var(--wt-muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .card-foot { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; border-top:1px solid var(--wt-border); padding-top:12px; }
+  .reason { flex:1 1 100%; min-width:0; color:var(--wt-muted); font-size:13px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .actions { display:flex; flex-wrap:wrap; gap:8px; }
+  .actions .wt-btn { height:28px; padding:0 10px; font-size:12px; }
+  .actions a.wt-btn:hover { text-decoration:none; }
+  .details { margin-top:16px; padding-top:16px; border-top:1px solid var(--wt-border); font-size:13px; }
+  .full-reason { overflow-wrap:anywhere; }
+  .cov-reasons { margin:8px 0 0; padding-left:16px; color:var(--wt-muted); font-size:12px; overflow-wrap:anywhere; }
+  .metadata { display:flex; flex-wrap:wrap; gap:4px 16px; margin:12px 0; color:var(--wt-muted); font-size:12px; }
+  .runs { list-style:none; padding:0; }
+  .runs > li { padding:12px 0; border-top:1px solid var(--wt-border); overflow-wrap:anywhere; }
+  .run-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+  .run-heading b { font-weight:600; color:var(--status, var(--wt-text)); }
+  .run-meta, .run-notes, .empty { color:var(--wt-muted); font-size:12px; }
+  .run-summary, .run-notes { margin-top:4px; }
+  summary { cursor:pointer; }
+  pre { margin:4px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; font:12px/1.5 var(--wt-mono); }
+  .copy.wt-btn { height:24px; padding:0 8px; font-size:12px; }
+  .empty, #load-error { grid-column:1/-1; }
+  #load-error { margin-bottom:12px; color:var(--wt-bad); }
+  @media (max-width:1280px) {
+    .cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .totals { grid-template-columns:repeat(3, 1fr); }
+    .total:nth-child(4) { border-left:0; }
+    .total:nth-child(n+4) { border-top:1px solid var(--wt-border); }
+    a.total:first-child { border-radius:var(--wt-radius) 0 0 0; }
+    .total.lead .v { font-size:28px; line-height:1.2; }
+  }
+  @media (max-width:760px) {
+    .cards { grid-template-columns:minmax(0,1fr); }
+    .totals { grid-template-columns:repeat(2, 1fr); margin-bottom:32px; }
+    .total { padding:16px; }
+    .total:nth-child(n) { border-left:1px solid var(--wt-border); }
+    .total:nth-child(odd) { border-left:0; }
+    .total:nth-child(n+3) { border-top:1px solid var(--wt-border); }
+    .total .v, .total.lead .v { font-size:24px; }
+    h1 { font-size:24px; }
+    main { padding-block:24px 48px; }
+    .head > div, .head form { width:100%; }
+    textarea { flex:1; width:auto; min-width:0; }
+    .card { padding:16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cards.enter .card, .wt-state[data-tip], .reason[data-tip], .wt-chip[data-tip], .portal-path[data-tip] { cursor:help; }
+  .card.changed .wt-state { animation:none; }
+    .wt-meter::before { transition:none; }
+  }
+</style>
+</head>
+<body>
+<main class="wt-frame">
+  <div class="head">
+    <div>
+      <h1>Portals</h1>
+      <p class="lede">Each portal is read by a generated reader, checked before it is published, and audited against its own pages.</p>
+    </div>
+    <div>
+      <form id="add">
+        <textarea id="url" aria-label="Portal addresses" placeholder="Portal URLs, one per line" rows="1" required></textarea>
+        <button class="wt-btn primary add-button">Add portal(s)</button>
+      </form>
+      <p id="addmsg" role="status"></p>
+    </div>
+  </div>
+  <section class="totals" aria-label="Live totals">
+    <a class="total lead" href="/_ui/tenders/view"><span class="k">Open tenders</span><span class="v" id="t-tenders">–</span><span class="s" id="t-tenders-s">&nbsp;</span></a>
+    <div class="total"><span class="k">Portals serving</span><span class="v" id="t-portals">–</span><span class="s" id="t-portals-s">&nbsp;</span></div>
+    <div class="total"><span class="k">Countries</span><span class="v" id="t-countries">–</span><span class="s wt-num" id="t-countries-s">&nbsp;</span></div>
+    <a class="total" href="/_ui/tenders/view?docs=1" data-tip-title="Tender documents we downloaded" data-tip="Notices, specifications and annexes, stored and served from here. Open the Tenders page filtered to tenders with documents."><span class="k">Documents</span><span class="v" id="t-docs">–</span><span class="s" id="t-docs-s">&nbsp;</span></a>
+    <a class="total" href="/_ui/crossref/view" data-tip-title="The same tender, listed by more than one portal" data-tip="For example a regional platform and the national journal both publish it. We match them by evidence and show where their values disagree (deadlines, titles, buyers)."><span class="k">Same tender, several sources</span><span class="v" id="t-cross">–</span><span class="s" id="t-cross-s">&nbsp;</span></a>
+    <div class="total"><span class="k">Model spend</span><span class="v" id="t-spend">–</span><span class="s" id="t-spend-s">&nbsp;</span></div>
+  </section>
+  <div class="overview">
+    <h2>Integrations</h2>
+    <div class="states" aria-label="Portals by state">
+      <span class="serving"><i class="dot"></i><span><b id="c-serving">0</b>Serving</span></span>
+      <span class="healing"><i class="dot"></i><span><b id="c-healing">0</b>Healing</span></span>
+      <span class="integrating"><i class="dot"></i><span><b id="c-integrating">0</b>Integrating</span></span>
+      <span class="failed"><i class="dot"></i><span><b id="c-failed">0</b>Failed</span></span>
+    </div>
+  </div>
+  <p id="load-error" role="status" hidden></p>
+  <div id="cards" class="cards"><p class="empty">Loading portals…</p></div>
+</main>
+<script>
+const cards = document.getElementById("cards");
+const listError = document.getElementById("load-error");
+const openPortals = new Set();
+const openNotes = new Set();
+const details = new Map();
+const runText = new Map();
+const labels = {serving:"Serving", healing:"Healing", integrating:"Integrating", failed:"Failed"};
+const order = {healing:0, integrating:1, serving:2, failed:3};
+const number = new Intl.NumberFormat();
+const dateTime = new Intl.DateTimeFormat(undefined, {
+  month:"short", day:"numeric", hour:"2-digit", minute:"2-digit", timeZoneName:"short"
+});
+const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+  "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+}[char]));
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let portals = [];
+let counted = new Set();        // ids of the registrations that count towards the totals (one per host)
+let polling = false;
+let firstDraw = true;
+const seenNumbers = new Map();  // key -> last shown value, so a changed number animates from the old one
+const seenStates = new Map();
+const seenMeters = new Map();
+
+async function getJSON(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Request failed");
+  return response.json();
+}
+
+function portalAddress(url) {
+  try {
+    const parsed = new URL(url);
+    return [parsed.hostname, parsed.pathname === "/" && !parsed.search ? "" : parsed.pathname + parsed.search];
+  } catch {
+    return [url, ""];
+  }
+}
+
+// A portal = its host without a leading "www."; of several registrations of one host, the one with most tenders.
+function hostKey(url) { return portalAddress(url)[0].toLowerCase().replace(/^www\./, ""); }
+function countedRegistrations(list) {
+  const best = new Map();
+  for (const p of list) {
+    const key = hostKey(p.url), held = best.get(key);
+    if (!held || (p.tenderCount || 0) > (held.tenderCount || 0)) best.set(key, p);
+  }
+  return best;
+}
+
+function ago(iso) {
+  if (!iso) return "never";
+  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  return `${Math.floor(s / 86400)} d ago`;
+}
+
+// Show `value` in `el`; when it differs from what was last shown under `key`, count from the old value to the new.
+function showNumber(el, key, value, format = number.format) {
+  const from = seenNumbers.get(key);
+  seenNumbers.set(key, value);
+  const start = from === undefined ? (el.dataset.countup ? 0 : value) : from;
+  if (calm || start === value) { el.textContent = format(value); return; }
+  const t0 = performance.now(), ms = 700;
+  const whole = Number.isInteger(value) && Number.isInteger(start);
+  (function step(now) {
+    if (seenNumbers.get(key) !== value || !el.isConnected) return;
+    const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    const v = start + (value - start) * e;
+    el.textContent = format(whole ? Math.round(v) : v);
+    if (k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+function shortReason(p) {
+  const reason = p.reason || "";
+  if (p.state === "integrating") return "Learning how to read this portal.";
+  if (p.state === "healing") return p.lastSuccessAt
+    ? "Repairing the connection. Showing the last good snapshot."
+    : "Repairing the connection.";
+  if (p.state === "serving") {
+    if (/\bpartial\b|more than we read|listing is incomplete/i.test(reason)) return "Only part of the listing was read.";
+    if (p.documents.pending || p.documents.pendingLists) return "Tenders are available. Document collection is in progress.";
+    return "Delivering tenders.";
+  }
+  if (/^Blocked:.*captcha/i.test(reason)) return "A CAPTCHA is blocking access.";
+  if (/^Blocked:.*(?:login|sign.in|access denied)/i.test(reason)) return "The portal requires sign-in.";
+  if (/page cap|too many pages|listing is incomplete|pagination/i.test(reason)) return "Could not read the full tender listing.";
+  if (/connecterror|timed? ?out|name or service|too many redirects/i.test(reason)) return "Could not connect to the portal reliably.";
+  if (/deadline|submissionDeadline/i.test(reason)) return "Could not verify submission deadlines.";
+  return p.lastSuccessAt ? "Could not restore reliable delivery." : "Could not verify the tender listing.";
+}
+
+// Plain first line for the reason tooltip of a failed or healing portal.
+function plainReason(p) {
+  const reason = p.reason || "";
+  if (/could not attach/i.test(reason)) return "Not attached yet";
+  if (/repair running/i.test(reason)) return "Repairing; the last good data is still served";
+  if (/blocked/i.test(reason)) return "The portal blocks automated reading";
+  return "Read rejected";
+}
+
+function timeMarkup(iso) {
+  return iso ? `<time datetime="${esc(iso)}" title="${esc(iso)}">${esc(dateTime.format(new Date(iso)))}</time>` : "—";
+}
+
+function renderDetails(p) {
+  const detail = details.get(p.id);
+  if (!detail) return '<p class="empty">Loading run history…</p>';
+  if (detail.error) return '<p class="empty">Run history could not be loaded.</p>';
+  const rows = detail.runs.map(run => {
+    const info = run.detail || {};
+    const notes = (info.log || []).concat(info.failures || []);
+    runText.set(run.id, [
+      `portal: ${p.url}`, `state: ${p.state} - ${p.reason}`,
+      `run: ${run.kind} ${run.result ?? "running"} at ${run.startedAt}, ${run.requests} requests, $${run.llmUsd}`,
+      `summary: ${run.summary}`, ...notes, ...(info.trace ? ["trace:", info.trace] : [])
+    ].join("\n"));
+    const noteMarkup = notes.length
+      ? `<details class="run-notes" data-run="${esc(run.id)}" ${openNotes.has(run.id) ? "open" : ""}>
+          <summary>${number.format(notes.length)} step notes</summary><pre>${esc(notes.join("\n"))}</pre></details>`
+      : "";
+    const runState = run.result === "ok" ? "serving" : run.result === "failed" ? "failed" : "healing";
+    return `<li>
+      <div class="run-heading"><span><b class="${runState}">${esc(run.kind)} · ${esc(run.result || "running")}</b>
+        <span class="run-meta"> · ${timeMarkup(run.startedAt)} · ${number.format(run.requests)} requests</span></span>
+        <button class="wt-btn copy" data-copy="${esc(run.id)}">Copy log</button></div>
+      <p class="run-summary">${esc(run.summary)}</p>${noteMarkup}
+    </li>`;
+  }).join("");
+  const modelCosts = detail.llm.unpricedCalls
+    ? ` + ${number.format(detail.llm.unpricedCalls)} unpriced` : "";
+  return `<div class="metadata"><span>Spec ${detail.specVersion === null ? "—" : "v" + esc(detail.specVersion)} ${esc(detail.specKind ?? "")}</span>
+    <span>${number.format(detail.llm.calls)} model calls · $${esc(detail.llm.usd)}${modelCosts}</span></div>
+    <ul class="runs">${rows || '<li class="empty">No runs yet.</li>'}</ul>`;
+}
+
+// Verification block: accuracy meter with the 95% lower bound marked; the whole block opens the audit view.
+function verifyBlock(p) {
+  const v = p.verification;
+  const href = `/_ui/audit/${encodeURIComponent(p.id)}/view`;
+  const hint = "Sampled tenders re-read from the portal and compared field by field";
+  if (!v || v.status === "pending") {
+    return `<div class="verify" title="${hint}"><div class="verify-top"><span>Verification</span><b><i>Not verified yet</i></b></div>
+      <div class="wt-meter none"></div><p class="verify-sub">No audit has run for this portal</p></div>`;
+  }
+  const when = v.lastAuditAt ? ` · ${esc(ago(v.lastAuditAt))}` : "";
+  if (/^not possible/.test(v.status) || v.accuracy === null || v.accuracy === undefined) {
+    return `<a class="verify" href="${href}" title="${esc(v.status)}"><div class="verify-top"><span>Verification</span><b><i>Not possible on this portal</i></b></div>
+      <div class="wt-meter none"></div><p class="verify-sub">The source pages could not be compared${when} · why</p></a>`;
+  }
+  const pct = Math.round(v.accuracy * 100);
+  const low = v.accuracyLow95 ?? null;
+  const tone = v.status === "degraded" ? (v.accuracy < 0.8 ? "bad" : "warn") : "";
+  const from = seenMeters.get(p.id) ?? (calm ? v.accuracy : 0);
+  return `<a class="verify" href="${href}" title="${hint}">
+    <div class="verify-top"><span>Verification${v.status === "degraded" ? " · degraded" : ""}</span>
+      <b><span data-n="acc:${esc(p.id)}" data-v="${pct}" data-suffix="%">${pct}%</span>${low === null ? "" : ` <i>at least ${Math.round(low * 100)}%</i>`}</b></div>
+    <div class="wt-meter ${tone}" data-meter="${esc(p.id)}" data-to="${v.accuracy}" style="--v:${from};--low:${low ?? 0}"></div>
+    <p class="verify-sub">${number.format(v.fieldsMatched)} of ${number.format(v.fieldsChecked)} fields match on ${number.format(v.sampled)} tenders${when}</p></a>`;
+}
+
+function coverageChips(p) {
+  const c = p.coverage || {};
+  const why = (c.reasons || []).join("\n");
+  const tipFor = head => why ? ` tabindex="0" data-tip-title="${head}" data-tip="${esc(why)}"` : "";
+  const listing = {complete:["ok", "Complete listing"], partial:["warn", "Partial listing"]}[c.tenders] || ["", "Coverage unknown"];
+  const docs = {available:["ok", "Documents"], partial:["warn", "Some documents"], pending:["", "Documents pending"],
+    none:["", "No documents"]}[c.documents];
+  const second = counted.has(p.id) ? "" : `<span class="wt-chip" tabindex="0" data-tip-title="Second address of this portal" data-tip="Another address of the same portal serves more tenders, so this one is left out of the totals.">Second address</span>`;
+  return `<div class="chips"><span class="wt-chip ${listing[0]}"${tipFor("Why coverage is limited")}>${listing[1]}</span>` +
+    (docs ? `<span class="wt-chip ${docs[0]}"${tipFor("Why coverage is limited")}>${docs[1]}</span>` : "") + second + `</div>`;
+}
+
+function renderCard(p, index) {
+  const id = esc(p.id);
+  const [host, path] = portalAddress(p.url);
+  const expanded = openPortals.has(p.id);
+  const latest = p.lastRun;
+  const when = latest?.finishedAt || latest?.startedAt;
+  const runLabel = latest ? `${latest.kind === "repair" ? "Repair" : "Read"} · ${latest.result ?? "running"}` : "No runs yet";
+  const pendingLists = p.documents.pendingLists
+    ? `<small>${number.format(p.documents.pendingLists)} awaiting file lists</small>` : "";
+  const before = seenStates.get(p.id);
+  const changed = before !== undefined && before !== p.state;
+  const troubled = p.state === "failed" || p.state === "healing";
+  const reasons = (p.coverage?.reasons || []).map(r => `<li>${esc(r)}</li>`).join("");
+  return `<article class="card${changed ? " changed" : ""}" style="--i:${index}" aria-labelledby="portal-${id}">
+    <div class="card-heading">
+      <div class="site"><h3 id="portal-${id}">${esc(host)}</h3>${path ? `<p class="portal-path" tabindex="0" data-tip="${esc(p.url)}">${esc(path)}</p>` : ""}</div>
+      <span class="wt-state ${labels[p.state] ? esc(p.state) : ""}"${troubled ? ` tabindex="0" data-tip-title="${esc(plainReason(p))}" data-tip="${esc(p.reason)}"` : ""}>${esc(labels[p.state] || p.state)}</span>
+    </div>
+    <dl class="metrics">
+      <div><dt>Tenders</dt><dd><b data-n="open:${id}" data-v="${p.tenders.open}">${number.format(p.tenders.open)}</b>open<small>${number.format(p.tenders.withdrawn)} withdrawn</small></dd></div>
+      <div><dt>Documents</dt><dd><b data-n="docs:${id}" data-v="${p.documents.downloaded}">${number.format(p.documents.downloaded)}</b>downloaded
+        <small>${number.format(p.documents.pending)} links pending</small>${pendingLists}</dd></div>
+      <div><dt>Last read</dt><dd><b class="rel" title="${esc(p.lastSuccessAt || "")}">${esc(ago(p.lastSuccessAt))}</b>${esc(runLabel)}<small>${timeMarkup(when)}</small></dd></div>
+    </dl>
+    ${coverageChips(p)}
+    ${verifyBlock(p)}
+    <div class="card-foot"><p class="reason" tabindex="0" data-tip-title="${esc(troubled ? plainReason(p) : shortReason(p))}" data-tip="${esc(p.reason)}">${esc(shortReason(p))}</p>
+      <div class="actions">
+        <a class="wt-btn" href="/_ui/tenders/view?portal=${encodeURIComponent(p.id)}">Tenders</a>
+        <button class="wt-btn" data-details="${id}" aria-expanded="${expanded}" aria-controls="details-${id}">${expanded ? "Hide details" : "Details"}</button>
+        <button class="wt-btn" data-refresh="${id}">Refresh</button>
+        <button class="wt-btn" data-audit="${id}">Verify now</button>
+      </div>
+    </div>
+    <div class="details" id="details-${id}" ${expanded ? "" : "hidden"}>${expanded
+      ? `<p class="full-reason">${esc(p.reason)}</p>${reasons ? `<ul class="cov-reasons">${reasons}</ul>` : ""}${renderDetails(p)}` : ""}</div>
+  </article>`;
+}
+
+function drawTotals() {
+  const best = countedRegistrations(portals);
+  counted = new Set([...best.values()].map(p => p.id));
+  const chosen = [...best.values()];
+  const serving = chosen.filter(p => p.state === "serving" || (p.state === "healing" && p.tenderCount));
+  const sum = pick => chosen.reduce((total, p) => total + (pick(p) || 0), 0);
+  const generic = new Set(["com", "org", "net", "eu", "info", "int", "gov", "edu"]);
+  const countries = [...new Set(serving.map(p => hostKey(p.url).split(".").pop()).filter(t => t.length === 2 && !generic.has(t)))].sort();
+  const set = (id, key, value, sub, format) => {
+    const el = document.getElementById(id);
+    el.dataset.countup = "1";
+    showNumber(el, key, value, format);
+    if (sub !== undefined) document.getElementById(id + "-s").textContent = sub;
+  };
+  // open tenders (status open, deadline not passed), the same count the Tenders page shows; tenderCount also holds
+  // withdrawn ones
+  set("t-tenders", "t:tenders", sum(p => (p.tenders && p.tenders.open != null) ? p.tenders.open : p.tenderCount),
+      `across ${number.format(serving.length)} portals`);
+  set("t-portals", "t:portals", serving.length, `${number.format(portals.length)} addresses registered`);
+  set("t-countries", "t:countries", countries.length, countries.join(" ").toUpperCase());
+  set("t-docs", "t:docs", sum(p => p.documents.downloaded), `downloaded · ${number.format(sum(p => p.documents.pending))} more queued`);
+}
+
+// Hero figures that do not come from /_ui/portals. One request each on load; after that model spend is asked
+// again every 5 minutes and the cross-portal count only until its first result exists, both from the poll timer.
+let crossKnown = false, crossBusy = false, spendBusy = false, spendAt = 0;
+function loadSpend() {
+  if (spendBusy) return;
+  spendBusy = true; spendAt = Date.now();
+  getJSON("/_ui/totals").then(t => {
+    const el = document.getElementById("t-spend");
+    el.dataset.countup = "1";
+    showNumber(el, "t:spend", t.llm.usd, v => "$" + v.toFixed(2));
+    document.getElementById("t-spend-s").textContent = `${number.format(t.llm.calls)} model calls so far`;
+  }).catch(() => { document.getElementById("t-spend-s").textContent = "Not available"; })
+    .finally(() => { spendBusy = false; });
+}
+function loadCross() {
+  if (crossKnown || crossBusy) return;
+  crossBusy = true;
+  getJSON("/_ui/totals/crossref").then(c => {
+    if (c.computing || c.crossPortalGroups === null || c.crossPortalGroups === undefined) {
+      document.getElementById("t-cross-s").textContent = "comparing portals…";
+      return;
+    }
+    crossKnown = true;
+    const el = document.getElementById("t-cross");
+    el.dataset.countup = "1";
+    showNumber(el, "t:cross", c.crossPortalGroups ?? 0);
+    document.getElementById("t-cross-s").textContent = `tenders listed on 2+ of ${number.format(c.crossPortalPortals ?? 0)} portals`;
+  }).catch(() => { document.getElementById("t-cross-s").textContent = "Not available"; })
+    .finally(() => { crossBusy = false; });
+}
+
+function redraw() {
+  const focused = document.activeElement;
+  const key = ["details", "refresh", "audit", "copy"].find(key => focused?.dataset[key]);
+  const value = key && focused.dataset[key];
+  runText.clear();
+  const counts = {serving:0, healing:0, integrating:0, failed:0};
+  for (const p of portals) if (p.state in counts) counts[p.state]++;
+  for (const key of Object.keys(counts)) showNumber(document.getElementById("c-" + key), "c:" + key, counts[key]);
+  drawTotals();
+  cards.classList.toggle("enter", firstDraw && portals.length > 0 && !calm);
+  cards.innerHTML = portals.map(renderCard).join("") || '<p class="empty">No portals yet. Add a portal address above.</p>';
+  if (portals.length) firstDraw = false;
+  for (const p of portals) seenStates.set(p.id, p.state);
+  for (const el of cards.querySelectorAll("[data-n]")) {
+    const suffix = el.dataset.suffix || "";
+    showNumber(el, el.dataset.n, Number(el.dataset.v), v => number.format(v) + suffix);
+  }
+  const meters = cards.querySelectorAll("[data-meter]");
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    for (const el of meters) { el.style.setProperty("--v", el.dataset.to); seenMeters.set(el.dataset.meter, Number(el.dataset.to)); }
+  }));
+  if (key) Array.from(cards.querySelectorAll(`[data-${key}]`)).find(el => el.dataset[key] === value)?.focus({preventScroll:true});
+}
+
+async function loadDetails(id) {
+  try { details.set(id, await getJSON(`/_ui/portals/${encodeURIComponent(id)}`)); }
+  catch { details.set(id, {error:true}); }
+}
+
+// /_ui/portals is the expensive request: never more than one in flight, and never sooner than 15 s after the
+// previous one started unless the user just acted (refresh, add).
+let lastPollAt = 0;
+async function poll(force = false) {
+  if (polling) return;
+  if (!force && Date.now() - lastPollAt < 15000) return;
+  polling = true;
+  lastPollAt = Date.now();
+  try {
+    const result = await getJSON("/_ui/portals");
+    portals = result.sort((a, b) => (order[a.state] ?? 4) - (order[b.state] ?? 4) || (b.tenderCount || 0) - (a.tenderCount || 0));
+    await Promise.all(portals.filter(p => openPortals.has(p.id)).map(p => loadDetails(p.id)));
+    listError.hidden = true;
+    redraw();
+  } catch {
+    listError.textContent = "Could not load portal status. Retrying shortly.";
+    listError.hidden = false;
+  } finally {
+    polling = false;
+  }
+}
+
+cards.addEventListener("click", async event => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  const {details:id, refresh, copy, audit} = button.dataset;
+  if (id) {
+    if (openPortals.delete(id)) { redraw(); return; }
+    openPortals.add(id);
+    redraw();
+    await loadDetails(id);
+    redraw();
+  } else if (refresh) {
+    button.disabled = true;
+    try {
+      const response = await fetch(`/portals/${encodeURIComponent(refresh)}/refresh`, {method:"POST"});
+      if (!response.ok) throw new Error("Refresh failed");
+      await poll(true);
+    } catch {
+      listError.textContent = "Could not request a refresh.";
+      listError.hidden = false;
+    } finally {
+      button.disabled = false;
+    }
+  } else if (audit) {
+    button.disabled = true;
+    try {
+      const response = await fetch(`/_ui/audit/${encodeURIComponent(audit)}`, {method:"POST"});
+      if (!response.ok) throw new Error("Audit failed");
+      button.textContent = "Verifying…";
+    } catch {
+      listError.textContent = "Could not start a verification.";
+      listError.hidden = false;
+      button.disabled = false;
+    }
+  } else if (copy) {
+    try {
+      await navigator.clipboard.writeText(runText.get(copy) || "");
+      button.textContent = "Copied";
+    } catch {
+      button.textContent = "Copy failed";
+    }
+  }
+});
+
+cards.addEventListener("toggle", event => {
+  const id = event.target.dataset?.run;
+  if (id) event.target.open ? openNotes.add(id) : openNotes.delete(id);
+}, true);
+
+document.getElementById("add").addEventListener("submit", async event => {
+  event.preventDefault();
+  const field = document.getElementById("url");
+  const urls = field.value.split(/[\n,\s]+/).map(url => url.trim()).filter(url => url.length > 3);
+  if (!urls.length) return;
+  const message = document.getElementById("addmsg");
+  const button = event.currentTarget.querySelector("button");
+  button.disabled = true;
+  let added = 0;
+  try {
+    for (const url of urls) {
+      const response = await fetch("/portals", {
+        method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({url})
+      });
+      if (response.ok) added++;
+    }
+  } catch {
+    // Keep the submitted addresses visible so the operator can retry.
+  } finally {
+    button.disabled = false;
+    message.textContent = `Added ${added} of ${urls.length}.`;
+    if (added === urls.length) field.value = "";
+    await poll(true);
+  }
+});
+
+// One timer, every 30 s, and nothing at all while the tab is hidden. Coming back to the tab polls once if the
+// data is older than 30 s.
+function tick() {
+  if (document.hidden) return;
+  if (!String(window.getSelection())) poll();
+  loadCross();
+  if (Date.now() - spendAt > 300000) loadSpend();
+}
+poll(true);
+loadSpend();
+loadCross();
+setInterval(tick, 30000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - lastPollAt > 30000) tick(); });
+</script>
+</body>
+</html>
