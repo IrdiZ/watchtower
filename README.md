@@ -1,4 +1,60 @@
-# Watchtower
+<h1 align="center">Watchtower</h1>
+
+<p align="center"><b>Give it a procurement portal's address. It learns to read the portal, serves its open tenders and documents, notices when the portal changes, and repairs itself.</b></p>
+
+<p align="center">
+  <img src="docs/media/hero.gif" alt="The Watchtower dashboard: open tenders, portals serving, and one card per portal with its health, coverage and measured correctness" width="860">
+</p>
+
+<p align="center">
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#run-it">Run it</a> ·
+  <a href="#measured-results">Measured results</a> ·
+  <a href="#known-limits">Known limits</a>
+</p>
+
+<p align="center">
+  20 portals in 10 countries, about 45,700 open tenders (21 Nov, 08:55 CET) ·
+  blind attach: 5 of 15 on the first try, 6 of 15 counting an automatic retry ·
+  a read that fails the checks is never published ·
+  repair in 23–46 s in the filmed runs ·
+  <a href="#known-limits">known limits</a>
+</p>
+
+<sub>The clips are cut from the demo video, filmed at 08:44 CET, so a few on-screen figures differ slightly from the 08:55 numbers in this README. The dashboard also lists the built-in demo portal as a 21st card.</sub>
+
+## See it work
+
+**Self-repair.** A portal's markup is broken on purpose: the next read is rejected, the last good data keeps serving, the model repairs the reader and shows what changed, and the following read makes 0 model calls. (Clip sped up 3×; this repair took 46 s.)
+
+<img src="docs/media/heal.gif" alt="Heal theater: Rename classes, read rejected, Healing, then Serving with the spec diff, then a refresh with 0 model calls" width="860">
+
+**Tenders, with their documents.** Open tenders from every portal in one list, filtered to those with documents, with one tender's files opened.
+
+<img src="docs/media/tenders.gif" alt="Tenders page: the With documents filter, then one tender's document list" width="860">
+
+**Same tender, several sources.** Tenders served by more than one portal are matched, and where the sources disagree (here, deadlines) both values are shown. (Clip sped up 2×.)
+
+<img src="docs/media/sources.gif" alt="Several sources page: deadline disagreements between portals, filtered by portal" width="860">
+
+**Measured correctness.** One portal's audit: sampled tenders, compared field by field with the source pages.
+
+<img src="docs/media/audit.gif" alt="Audit page for vergabe-westfalen: accuracy by field and the sampled tenders" width="860">
+
+**The Verifier.** A replay of a real audit, step by step: sample, open the source pages, read blind, compare each field.
+
+<img src="docs/media/verifier.gif" alt="Verifier engine replaying an audit" width="860">
+
+## Run it
+
+1. Copy `.env.example` to `.env` and add your OpenAI key.
+2. `docker build -t watchtower .`
+3. `docker run -p 8080:8080 --env-file .env -v watchtower-data:/data watchtower`
+4. Open http://localhost:8080.
+5. The fastest proof: **Heal theater** → **Attach demo portal** → **Rename classes**.
+6. A fresh install starts empty: add portal URLs on the dashboard.
+
+---
 
 An agent that attaches to European public-procurement portals from their address alone, serves their open tenders and documents, notices when a portal stops delivering correctly, and repairs itself.
 
@@ -106,6 +162,7 @@ Six audits cost **$0.011** in total. The TenderNed and oeffentlichevergabe rows 
 
 The in-app job was tested in its own container: attach TenderNed, then run `POST /_ui/audit/{id}`. With the default settings (K = 8, 4 renders), the audit compared 3 rendered pages and matched **14/14 fields**, using 104 requests and costing $0.0004. The rest were skipped as "renders only with JavaScript (no browser render left)". TenderNed's spec reads no JSON detail, so its tender pages are the source.
 
+<a name="measured-results"></a>
 ## Measured results · 21 November 2026, ~08:55 CET
 
 **Live portals** (attached from their address; counts = open tenders served, one per procedure):
@@ -145,6 +202,7 @@ The in-app job was tested in its own container: attach TenderNed, then run `POST
 | Tests | **413 passing** (`sh bench/test.sh`; live regression `python bench/regress.py` against `bench/live-baseline.json`) |
 | Clean build | `docker build --no-cache --platform linux/amd64` from the repo: OK (≈ 2.0 GB incl. Chromium); without a key the container serves and fails attaches with "no model configured" |
 
+<a name="known-limits"></a>
 **Known limits (honest).**
 - Award notices are recognised by the notice type the portal shows, or by a procedure type that says "Ex post". A portal that marks an award only in running text ("dieser Auftrag wurde bereits vergeben") is caught only by the no-deadline rule and by the audit's status check. A spec learned before this rule has no `noticeType`: such a portal needs a re-attach, unless its procedure type names the result publication. The no-deadline rule never removes a tender that is already served.
 - BOAMP deadlines come from its open-data API (`datelimitereponse`). Checked on 3 notices (21 Nov) against the notice's own data (`donnees`, `TenderSubmissionDeadlinePeriod`): 2 are the true UTC instant (12:00+01:00 → 11:00Z; 12:00+02:00 → 10:00Z), 1 is the local time labelled +00:00 (notice 11:00:00.000+01:00 → API 11:00Z, one hour late). The error is per notice, not systematic, so no time-zone correction is applied; the fix is to read the deadline from `donnees`.
